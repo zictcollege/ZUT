@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 
+use App\Models\Admissions\UserPersonalInformation;
 use App\Models\User;
 use App\Models\UserTypes;
 
@@ -24,6 +25,10 @@ class UserRepo {
     {
         return User::create($data);
     }
+    public function createPIRecord($data)
+    {
+        return UserPersonalInformation::create($data);
+    }
 
     public function getUserByType($type)
     {
@@ -42,17 +47,17 @@ class UserRepo {
 
     public function find($id)
     {
-        return User::find($id);
+        return User::with('nextofKin','personalinfo')->find($id);
     }
 
     public function getAll()
     {
-        return User::orderBy('first_name', 'asc')->get();
+        return User::with('personalinfo')->all()->orderBy('first_name', 'asc')->get();
     }
 
     public function getPTAUsers()
     {
-        return User::where('user_type', '<>', 'student')->orderBy('first_name', 'asc')->get();
+        return User::with('personalinfo')->where('user_type', '<>', 'student')->orderBy('first_name', 'asc')->get();
     }
 
     /********** STAFF RECORD ********/

@@ -1,11 +1,13 @@
 @extends('layouts.master')
 @section('page_title', 'Edit Academic Period')
 @section('content')
-
+    @php
+        use App\Helpers\Qs;
+    @endphp
     <div class="card">
         <div class="card-header header-elements-inline">
             <h6 class="card-title">Edit an Academic Period</h6>
-            {!! 00 !!}
+            {!! Qs::getPanelOptions() !!}
         </div>
 
         <div class="card-body">

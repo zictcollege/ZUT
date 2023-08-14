@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Models\Prerequisite;
+use App\Models\Academics\Prerequisite;
 use Illuminate\Support\Facades\DB;
 
 class PrerequisiteRepo

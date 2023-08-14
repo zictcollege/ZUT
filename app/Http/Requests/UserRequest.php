@@ -21,30 +21,48 @@ class UserRequest extends FormRequest
     public function rules()
     {
         $store =  [
-            'name' => 'required|string|min:6|max:150',
+            'first_name' => 'required|string|min:3|max:150',
+            'middle_name' => 'sometimes|nullable|string|min:3|max:150',
+            'last_name' => 'required|string|min:3|max:150',
             'password' => 'nullable|string|min:3|max:50',
-            'user_type' => 'required',
             'gender' => 'required|string',
             'phone' => 'sometimes|nullable|string|min:6|max:20',
             'email' => 'sometimes|nullable|email|max:100|unique:users',
-            'username' => 'sometimes|nullable|alpha_dash|min:8|max:100|unique:users',
-            'photo' => 'sometimes|nullable|image|mimes:jpeg,gif,png,jpg|max:2048',
-            'address' => 'required|string|min:6|max:120',
-            'state_id' => 'required',
-            'lga_id' => 'required',
-            'nal_id' => 'required',
+            'image' => 'sometimes|nullable|image|mimes:jpeg,gif,png,jpg|max:2048',
+            //'address' => 'required|string|min:6|max:120',
+            'passport'=> 'sometimes|nullable|string|min:6|max:20',
+            'nrc' => 'required|regex:/^[0-9]{6}\/[0-9]{2}\/[0-9]{1}/',
+            'dob' => 'required',
+            'marital_status'=>'required',
+            'street_main'=>'required',
+            'province_state'=>'required',
+            'town_city'=>'required',
+            'telephone'=>'sometimes|nullable',
+            'mobile'=>'required',
+            'nationality'=>'required',
+            //'country_of_residence'=>'required'
         ];
         $update =  [
-            'name' => 'required|string|min:6|max:150',
+            'first_name' => 'required|string|min:3|max:150',
+            'middle_name' => 'sometimes|nullable|string|min:3|max:150',
+            'last_name' => 'required|string|min:3|max:150',
+            'password' => 'nullable|string|min:3|max:50',
             'gender' => 'required|string',
             'phone' => 'sometimes|nullable|string|min:6|max:20',
-            'phone2' => 'sometimes|nullable|string|min:6|max:20',
-            'email' => 'sometimes|nullable|email|max:100|unique:users,email,'.$this->user,
-            'photo' => 'sometimes|nullable|image|mimes:jpeg,gif,png,jpg|max:2048',
-            'address' => 'required|string|min:6|max:120',
-            'state_id' => 'required',
-            'lga_id' => 'required',
-            'nal_id' => 'required',
+            'email' => 'sometimes|nullable|email|max:100|unique:users',
+            'image' => 'sometimes|nullable|image|mimes:jpeg,gif,png,jpg|max:2048',
+            //'address' => 'required|string|min:6|max:120',
+            'passport'=> 'sometimes|nullable|string|min:6|max:20',
+            'nrc' => 'required|regex:/^[0-9]{6}\/[0-9]{2}\/[0-9]{1}/',
+            'dob' => 'required',
+            'marital_status'=>'required',
+            'street_main'=>'required',
+            'province_state'=>'required',
+            'town_city'=>'required',
+            'telephone'=>'sometimes|nullable',
+            'mobile'=>'required',
+            'nationality'=>'required',
+            //'country_of_residence'=>'required'
         ];
         return ($this->method() === 'POST') ? $store : $update;
     }
@@ -65,7 +83,7 @@ class UserRequest extends FormRequest
         if($this->method() === 'POST'){
             $input = $this->all();
 
-            $input['user_type'] = Qs::decodeHash($input['user_type']);
+            //$input['user_type'] = Qs::decodeHash($input['user_type']);
 
             $this->getInputSource()->replace($input);
 

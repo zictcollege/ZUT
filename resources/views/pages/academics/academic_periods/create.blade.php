@@ -8,7 +8,7 @@
     <div class="card">
         <div class="card-header header-elements-inline">
             <h6 class="card-title">Manage Academic Periods</h6>
-            {!! 00 !!}
+            {!! Qs::getPanelOptions() !!}
         </div>
 
         <div class="card-body">
@@ -186,10 +186,10 @@
 
                                                         <div class="dropdown-menu dropdown-menu-left">
                                                             @if(true)
-                                                                <a href="{{ route('update', $m->id) }}" class="dropdown-item"><i class="icon-pencil"></i> Edit</a>
+                                                                <a href="{{ route('update',Qs::hash($m->id)) }}" class="dropdown-item"><i class="icon-pencil"></i> Edit</a>
                                                             @endif
                                                                 @if(true)
-                                                                    <a href="{{ route('academic.show', $m->id) }}" class="dropdown-item"><i class="icon-eye"></i> Show</a>
+                                                                    <a href="{{ route('academic.show', Qs::hash($m->id)) }}" class="dropdown-item"><i class="icon-eye"></i> Show</a>
                                                                 @endif
                                                             @if(true)
                                                                 <a id="{{ $m->id }}" onclick="confirmDelete(this.id)" href="#" class="dropdown-item"><i class="icon-trash"></i> Delete</a>
@@ -241,14 +241,14 @@
 
                                                         <div class="dropdown-menu dropdown-menu-left">
                                                             @if(true)
-                                                                <a href="{{ route('studymodes.edit', $m->id) }}" class="dropdown-item"><i class="icon-pencil"></i> Edit</a>
+                                                                <a href="{{ route('studymodes.edit', Qs::hash($m->id)) }}" class="dropdown-item"><i class="icon-pencil"></i> Edit</a>
                                                             @endif
                                                                 @if(true)
-                                                                    <a href="{{ route('academic.show', $m->id) }}" class="dropdown-item"><i class="icon-eye"></i> Show</a>
+                                                                    <a href="{{ route('academic.show', Qs::hash($m->id)) }}" class="dropdown-item"><i class="icon-eye"></i> Show</a>
                                                                 @endif
                                                             @if(true)
                                                                 <a id="{{ $m->id }}" onclick="confirmDelete(this.id)" href="#" class="dropdown-item"><i class="icon-trash"></i> Delete</a>
-                                                                <form method="post" id="item-delete-{{ $m->id }}" action="{{ route('academics.destroy', $m->id) }}" class="hidden">@csrf @method('delete')</form>
+                                                                <form method="post" id="item-delete-{{ $m->id }}" action="{{ route('academics.destroy', Qs::hash($m->id)) }}" class="hidden">@csrf @method('delete')</form>
                                                             @endif
 
                                                         </div>

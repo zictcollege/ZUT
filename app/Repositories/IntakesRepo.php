@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Models\Intakes;
+use App\Models\Academics\Intakes;
 
 class IntakesRepo
 {

@@ -80,10 +80,13 @@ class AcademicPeriodsController extends Controller
      */
     public function show(string $id)
     {
+        $id = Qs::decodeHash($id);
         $period['period'] = $academic = $this->academic->find($id);
         $period['fees'] = $this->fees->getAll();
         $period['courses'] = $this->coursesRepo->getAll();
-        $period['instructors'] = DB::table('users')->where('role_id','=',8)->get();
+        $period['instructors'] = DB::table('users')->where('user_type','=','instructor')->get();
+         $ap = \App\Models\Academics\AcademicPeriods::data($id);
+         //dd($ap);
        // $period['periodFees'] = $this->feesRepo->getPeriodFees($id);
         //dd($period['periodFees']);
         $period['periodFees'] = DB::table('ac_academicPeriodFees')
@@ -96,8 +99,9 @@ class AcademicPeriodsController extends Controller
                 'ac_academicPeriodFees.id AS id',
                 'ac_fees.id as fee_id',
                 'ac_fees.name AS fee_name',
-              //  'ac_studyModes.name AS mode',
-             //   'ac_studyModes.id as mode_id',
+                'ac_academicPeriodFees.crf AS repeat',
+                'ac_academicPeriodFees.p_f as normal',
+                'ac_academicPeriodFees.once_off as once_off',
                 'ac_academicPeriods.id as ac_id',
                 'ac_academicPeriods.code AS code'
             )->get();
@@ -192,6 +196,7 @@ class AcademicPeriodsController extends Controller
      */
     public function edit(string $id)
     {
+        $id = Qs::decodeHash($id);
         $period['period'] = $academic = $this->academic->find($id);
         $data['periodstypes'] = $this->periodtypes->getAll();
         $data['studymode'] = $this->studymode->getAll();
@@ -199,8 +204,15 @@ class AcademicPeriodsController extends Controller
             : Qs::goWithDanger('pages.academics.academic_periods.index',$data);
     }
     public function addAcfees(PeriodFees $req){
-        $data = $req->only(['academicPeriodID', 'feeID', 'amount']);
+        $data = $req->only(['academicPeriodID', 'feeID', 'amount','feetype']);
         $data['added_by_id'] = \Auth::user()->id;
+        if ($data['feetype'] == 0){
+            $data['p_f'] = 1;
+        }elseif ($data['feetype'] == 1){
+            $data['once_off'] = 1;
+        }elseif ($data['feetype']==2){
+            $data['crf'] = 1;
+        }
         $this->feesRepo->create($data);
 
         return Qs::jsonStoreOk();
@@ -246,6 +258,7 @@ class AcademicPeriodsController extends Controller
      */
     public function update(AcademicPeriodUpdate $req, string $id)
     {
+        $id = Qs::decodeHash($id);
         $data = $req->only(['code', 'registrationDate', 'lateRegistrationDate', 'acStartDate', 'acEndDate', 'periodID', 'resultsThreshold', 'registrationThreshold', 'type', 'examSlipThreshold', 'studyModeIDAllowed']);
         $data['registrationDate'] = date('Y-m-d', strtotime($data['registrationDate']));
         $data['lateRegistrationDate'] = date('Y-m-d', strtotime($data['lateRegistrationDate']));
@@ -261,6 +274,7 @@ class AcademicPeriodsController extends Controller
      */
     public function destroy(string $id)
     {
+        $id = Qs::decodeHash($id);
         $this->academic->find($id)->delete();
         return back()->with('flash_success', __('msg.delete_ok'));
     }

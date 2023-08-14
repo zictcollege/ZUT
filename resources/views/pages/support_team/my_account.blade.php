@@ -1,11 +1,13 @@
 @extends('layouts.master')
-@section('page_title', 'My Account')
+@section('page_title', 'My Account => '.$data['first_name'].' '.$data['first_name'])
 @section('content')
-
+    @php
+        use App\Helpers\Qs;
+    @endphp
     <div class="card">
         <div class="card-header header-elements-inline">
             <h6 class="card-title">My Account</h6>
-            {!! 00!!}
+            {!! Qs::getPanelOptions() !!}
         </div>
 
         <div class="card-body">
@@ -20,7 +22,7 @@
                 <div class="tab-pane fade show active" id="change-pass">
                     <div class="row">
                         <div class="col-md-8">
-                            <form method="post" action="{{ 00 }}">
+                            <form method="post" action="{{ route('my_account.change_pass') }}">
                                 @csrf @method('put')
 
                                 <div class="form-group row">
@@ -51,7 +53,48 @@
                         </div>
                     </div>
                 </div>
-
+                <div class="tab-pane fade show" id="edit-profile">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <table class="table table-bordered">
+                                <tbody>
+                                <tr>
+                                    <td class="font-weight-bold">Gender</td>
+                                    <td>{{ $data['gender'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-weight-bold text-justify">Email</td>
+                                    <td>{{ $data['email'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-weight-bold text-justify">NRC</td>
+                                    <td>{{ $data['nrc'] }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-weight-bold text-justify">Date of Birth</td>
+                                    <td>{{ $data['personalinfo']->dob }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-weight-bold text-justify">Marital Status</td>
+                                    <td>{{ $data['personalinfo']->marital_status }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-weight-bold text-justify">Street</td>
+                                    <td>{{ $data['personalinfo']->street_main }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-weight-bold text-justify">Telephone</td>
+                                    <td>{{ $data['personalinfo']->telephone }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="font-weight-bold text-justify">Mobile</td>
+                                    <td>{{ $data['personalinfo']->mobile }}</td>
+                                </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

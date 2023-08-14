@@ -96,6 +96,7 @@
                                     <th>S/N</th>
                                     <th>Name</th>
                                     <th>Amount</th>
+                                    <th>Fee type</th>
                                     <th>Action</th>
                                 </tr>
                                 </thead>
@@ -105,6 +106,16 @@
                                         <td>{{ $loop->iteration }}</td>
                                         <td>{{ $fees->fee_name }}</td>
                                         <td>{{ $fees->amount  }}</td>
+                                        <td>
+                                            @if($fees->once_off == 1)
+                                            {{ 'Once Off Fee' }}
+                                            @elseif($fees->normal == 1)
+                                            {{ 'Recurring Fee' }}
+                                            @elseif($fees->repeat == 1)
+                                            {{ 'Repeat Course Fee' }}
+                                            @endif
+
+                                        </td>
                                         <td>
                                             @if (Qs::userIsSuperAdmin())
                                                                                                         <a id="{{ $fees->id }}" onclick="confirmDelete(this.id)" href="#" class="dropdown-item"><i class="icon-trash"></i> Delete</a>
@@ -138,6 +149,17 @@
                                             <div class="col-lg-9">
                                                 <input name="amount" value="{{ old('amount') }}" required type="text" class="form-control" placeholder="Amount">
                                                 <input name="academicPeriodID" value="{{ $period['period']->id }}"  type="hidden">
+                                            </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label class="col-lg-3 col-form-label font-weight-semibold">Type <span class="text-danger">*</span></label>
+                                            <div class="col-lg-9">
+                                                <select required data-placeholder="Select Fee" class="form-control select" name="feetype" id="fee_id">
+                                                    <option>Select Fee</option>
+                                                        <option value="0">Recurring</option>
+                                                    <option value="1">Once Off</option>
+                                                    <option value="2">Repeat Course Fee</option>
+                                                </select>
                                             </div>
                                         </div>
 

@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Models\period_types;
+use App\Models\Academics\period_types;
 
 class PeriodTypeRepo
 {

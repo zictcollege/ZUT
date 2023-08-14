@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Models\ClassAssessment;
+use App\Models\Academics\ClassAssessment;
 
 class ClassAssessmentsRepo
 {

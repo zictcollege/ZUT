@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Models\CourseLevels;
+use App\Models\Academics\CourseLevels;
 
 class CourseLevelsRepo
 {

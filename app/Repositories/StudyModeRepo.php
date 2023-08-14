@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Models\studyModes;
+use App\Models\Academics\studyModes;
 
 class StudyModeRepo
 {

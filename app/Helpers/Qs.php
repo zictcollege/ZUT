@@ -2,9 +2,9 @@
 
 namespace App\Helpers;
 
+use App\Models\Admissions\StudentRecord;
 use App\Models\Setting;
 use App\Models\Settings;
-use App\Models\StudentRecord;
 use App\Models\Subject;
 use Hashids\Hashids;
 use Illuminate\Support\Facades\Auth;
@@ -73,6 +73,10 @@ class Qs
     {
         return ['admin', 'super_admin', 'instructor', 'student'];
     }
+    public static function getSupportTeam()
+    {
+        return ['admin', 'super_admin', 'instructor', 'accountant'];
+    }
 
     public static function getTeamAdministrative()
     {
@@ -88,7 +92,37 @@ class Qs
 
     public static function getUserRecord($remove = [])
     {
-        $data = ['name', 'email', 'phone', 'phone2', 'dob', 'gender', 'address', 'nal_id', 'state_id', 'lga_id'];
+        $data = ['first_name', 'middle_name', 'last_name', 'gender','image',
+            'email', 'password', 'passport', 'nrc'];
+
+        return $remove ? array_values(array_diff($data, $remove)) : $data;
+    }
+    public static function getUserRecords($remove = [])
+    {
+        $data = ['first_name', 'middle_name', 'last_name', 'gender','image',
+            'email', 'password', 'passport', 'nrc','user_type'];
+
+        return $remove ? array_values(array_diff($data, $remove)) : $data;
+    }
+    public static function getUserPersonalinfor($remove = [])
+    {
+        $data = ['dob', 'marital_status', 'province_state', 'town_city',
+            'telephone', 'mobile', 'nationality', 'street_main',
+            'post_code'];
+
+        return $remove ? array_values(array_diff($data, $remove)) : $data;
+    }
+    public static function getUserNKInfor($remove = [])
+    {
+        $data = ['nk_full_name','nk_email', 'relationship', 'nkaddress', 'nktel', 'nk_relationship','nk_nal_id',
+            'nk_state_id','nk_phone', 'nk_town_id'];
+
+        return $remove ? array_values(array_diff($data, $remove)) : $data;
+    }
+    public static function getUserACInfor($remove = [])
+    {
+        $data = ['nk_full_name','nk_email', 'relationship', 'nkaddress', 'nktel', 'nk_relationship','nk_nal_id',
+            'nk_state_id','nk_phone', 'nk_town_id'];
 
         return $remove ? array_values(array_diff($data, $remove)) : $data;
     }
@@ -136,6 +170,14 @@ class Qs
     public static function userIsAdmin()
     {
         return Auth::user()->user_type == 'admin';
+    }
+
+    public static function getStudentData($remove = [])
+    {
+        $data = ['programID', 'intakeID', 'studymodeID', 'level_id', 'typeID','paymentPlanID'];
+
+        return $remove ? array_values(array_diff($data, $remove)) : $data;
+
     }
 
     public static function getUserType()

@@ -24,7 +24,8 @@ class PeriodFees extends FormRequest
         return [
             'academicPeriodID' => 'required|integer|exists:ac_academicPeriods,id',
             'feeID' => 'required|integer|exists:ac_fees,id',
-            'amount' => 'required|numeric'
+            'amount' => 'required|numeric',
+            'feetype' => 'required|integer'
         ];
     }
 }

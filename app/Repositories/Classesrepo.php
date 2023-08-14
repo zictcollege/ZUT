@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Models\Classes;
+use App\Models\Academics\Classes;
 
 class Classesrepo
 {

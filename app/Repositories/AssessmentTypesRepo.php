@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Models\AssessmentTypes;
+use App\Models\Academics\AssessmentTypes;
 
 class AssessmentTypesRepo
 {

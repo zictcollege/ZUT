@@ -13,6 +13,7 @@ use App\Http\Controllers\Academics\ProgramCoursesController;
 use App\Http\Controllers\Academics\ProgramsController;
 use App\Http\Controllers\Academics\QualicationsController;
 use App\Http\Controllers\MyAccountController;
+use App\Http\Controllers\Student\RegistrationController;
 use App\Http\Controllers\SuperAdmin\SettingsController;
 use App\Http\Controllers\SupportTeam\AcademicFeesController;
 use App\Http\Controllers\SupportTeam\FeesController;
@@ -81,7 +82,7 @@ Route::group(['middleware' => 'auth'], function () {
     Route::group(['prefix' => 'my_account'], function() {
         Route::get('/', [MyAccountController::class,'index'])->name('my_account');
 //        Route::put('/', 'MyAccountController@update_profile')->name('my_account.update');
-//        Route::put('/change_password', 'MyAccountController@change_pass')->name('my_account.change_pass');
+        Route::put('/change_password',[MyAccountController::class,'change_pass'])->name('my_account.change_pass');
     });
     //admit student
     Route::group(['prefix' => 'admit'], function (){
@@ -103,6 +104,7 @@ Route::group(['middleware' => 'auth'], function () {
         Route::resource('classAssessments',ClassAssessmentsController::class);
         Route::resource('assessments',AssessmentsTypesController::class);
         Route::resource('students', StudentRecordController::class);
+        Route::resource('student', RegistrationController::class);
         Route::resource('classes', ClassesController::class);
         Route::resource('users', UsersController::class);
         Route::resource('programs', ProgramsController::class);

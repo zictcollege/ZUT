@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Models\Qualifications;
+use App\Models\Academics\Qualifications;
 
 class QualificationsRepo
 {

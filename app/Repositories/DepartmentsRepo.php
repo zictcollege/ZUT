@@ -2,7 +2,7 @@
 
 namespace App\Repositories;
 
-use App\Models\Departments;
+use App\Models\Academics\Departments;
 
 class DepartmentsRepo
 {
