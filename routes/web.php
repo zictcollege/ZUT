@@ -12,6 +12,7 @@ use App\Http\Controllers\Academics\PrerequisiteController;
 use App\Http\Controllers\Academics\ProgramCoursesController;
 use App\Http\Controllers\Academics\ProgramsController;
 use App\Http\Controllers\Academics\QualicationsController;
+use App\Http\Controllers\ClassController;
 use App\Http\Controllers\MyAccountController;
 use App\Http\Controllers\SuperAdmin\SettingsController;
 use App\Http\Controllers\SupportTeam\AcademicFeesController;
@@ -129,3 +130,42 @@ Route::group(['middleware' => 'auth'], function () {
 
 });
 Route::get('/try', [AcademicPeriodsController::class,'testddump']);
+
+
+//Lecture's Module Routes
+Route::get('/classes', [ClassController::class,'index'])->name('classes.index');
+Route::get('/classes/{class_id}/students', [ClassController::class, 'showStudents'])->name('classes.students');
+Route::get('/classes/{class_id}/tests', [ClassController::class, 'showTests'])->name('classes.tests');
+Route::get('/classes/{class_id}/assignments',[ClassController::class, 'showAssignments'])->name('classes.assignments');
+Route::get('/classes/{class_id}/labs',[ClassController::class, 'showLabs'])->name('classes.labs');
+
+Route::get('/tests/due-dates', [TestController::class,'index'])->name('tests.index');
+Route::post('/tests/results', [TestController::class,'storeResults'])->name('tests.store_results');
+
+Route::get('/assignments/due-dates',[AssignmentController::class,'index'])->name('assignments.index');
+Route::post('/assignments/results', [AssignmentController::class,'storeResults'])->name('assignments.store_results');
+
+Route::get('/flag-delayed-entries', [DelayController::class,'index'])->name('delay.index');
+
+//Examinations Management Module Routes
+
+Route::get('/exam-eligibility/{threshold}', [PreExaminationReportsController::class, 'getExamEligibility']);
+Route::get('/examination-lists/{courseId}', [PreExaminationReportsController::class, 'getExaminationListsByCourse']);
+Route::get('/examination-details/{examinationId}', [PreExaminationReportsController::class, 'getExaminationDetails']);
+
+Route::post('invigilators', [InvigilatorController::class, 'setInvigilator']);
+Route::post('classrooms', [InvigilatorController::class, 'setClassroom']);
+Route::post('courses', [InvigilatorController::class, 'setCourse']);
+
+//Routes for Students Module
+Route::get('/students/view-ca', [StudentController::class, 'viewCA'])->name('students.view-ca');
+Route::get('/students/view-results', [StudentController::class, 'viewResults'])->name('students.view-results');
+Route::get('/students/exemption-form', [StudentController::class, 'exemptionForm'])->name('students.exemption-form');
+Route::get('/students/withdrawal-form', [StudentController::class, 'withdrawalForm'])->name('students.withdrawal-form');
+Route::get('/students/change-program-form', [StudentController::class, 'changeProgramForm'])->name('students.change-program-form');
+Route::get('/students/change-study-mode-form', [StudentController::class, 'changeStudyModeForm'])->name('students.change-study-mode-form');
+Route::get('/students/withdrawal-deferment', [StudentController::class, 'withdrawalDeferment'])->name('students.withdrawal-deferment');
+Route::get('/students/differed-modules', [StudentController::class, 'differedModules'])->name('students.differed-modules');
+
+Route::get('/students/view-invoices', [StudentController::class, 'viewInvoices'])->name('students.view-invoices');
+Route::get('/students/view-receipts', [StudentController::class, 'viewReceipts'])->name('students.view-receipts');
