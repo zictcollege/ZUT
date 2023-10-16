@@ -2,6 +2,10 @@
 
 namespace App\Models\Applications;
 
+use App\Http\Requests\StudyMode\StudyMode;
+use App\Models\Academics\Programs;
+use App\Models\Academics\StudyModes;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 class ChangeProgram extends Model
@@ -30,12 +34,12 @@ class ChangeProgram extends Model
     {
 
         $changeProgramRequest   = ChangeProgram::find($id);
-        $newProgramData         = Program::dataMini($changeProgramRequest->programID);
-        $newStudyMode           = StudyMode::find($changeProgramRequest->studyModeID);
+        $newProgramData         = Programs::dataMini($changeProgramRequest->programID);
+        $newStudyMode           = StudyModes::find($changeProgramRequest->studyModeID);
         $student                = User::find($changeProgramRequest->userID);
         
-        $previousProgramData    = Program::dataMini($changeProgramRequest->previousProgramID);
-        $previousStudyMode      = StudyMode::find($changeProgramRequest->previousStudyModeID);
+        $previousProgramData    = Programs::dataMini($changeProgramRequest->previousProgramID);
+        $previousStudyMode      = StudyModes::find($changeProgramRequest->previousStudyModeID);
 
         $status                         = '';
         $firstReviewerNames             = '';

@@ -2,16 +2,20 @@
 
 namespace App\Http\Controllers\Student;
 
+use App\Helpers\Qs;
 use App\Http\Controllers\Controller;
+use App\Http\Controllers\SupportTeam\StudentProfileController;
 use App\Http\Middleware\Custom\Student;
 use App\Models\Academics\AcademicPeriods;
 use App\Models\Academics\Classes;
+use App\Models\Academics\Courses;
 use App\Models\Admissions\UserProgram;
 use App\Models\Admissions\UserStudyModes;
 use App\Models\Enrollment;
 use App\Repositories\StudentRecords;
 use App\Support\General;
 use App\Support\Progression;
+use App\Traits\User\Accounting;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
@@ -20,6 +24,9 @@ use Illuminate\Support\Facades\Auth;
 class RegistrationController extends Controller
 
 {
+    use \App\Traits\User\General;
+    use Accounting;
+
     /**
      * Display a listing of the resource.
      */
@@ -27,7 +34,7 @@ class RegistrationController extends Controller
 
     public function __construct(StudentRecords $studentrecordsRepo)
     {
-        $this->middleware(Student::class, ['except' => ['destroy',] ]);
+        $this->middleware(Student::class, ['except' => ['destroy',]]);
 
         $this->studentrecordsRepo = $studentrecordsRepo;
         // $this->user = $user;
@@ -37,67 +44,156 @@ class RegistrationController extends Controller
     {
         $id = Auth::user();
         $data = $this->studentrecordsRepo->getAllwithOtherInfor($id->id);
-        $programID = 4;
+        $programID = UserProgram::where('userID', $id->id)->get()->last();
+        $mode = UserStudyModes::where('userID', $id->id)->get()->last();
+        //$programID = UserProgram::where('userID', $id->id)->latest()->first();
         $intakeID = 1;
         $studymodeID = 1;
         $typeID = 2;
         $today = Carbon::today()->toDateString();
 
-        $courses = DB::table('ac_academicPeriods')
-            ->join('ac_classes', 'ac_academicPeriods.id', '=', 'ac_classes.academicPeriodID')
-            //->join('ac_enrollments', 'ac_enrollments.classID', '=', 'ac_classes.id')
-            ->join('ac_courses', 'ac_classes.courseID', '=', 'ac_courses.id')
-            ->join('ac_programCourses', 'ac_courses.id', '=', 'ac_programCourses.courseID')
-            ->join('users', 'ac_classes.instructorID', '=', 'users.id')
-            ->join('ac_programs', 'ac_programCourses.programID', '=', 'ac_programs.id')
-            ->where('ac_programs.id', $programID)
-            //->where('ac_programCourses.level_id', 1)
-            ->where('ac_academicPeriods.intakeID', $intakeID)
-            ->where('ac_academicPeriods.studymodeIDAllowed', $studymodeID)
-            //->where('ac_academicPeriods.type', $typeID)
-           // ->where('ac_enrollments.userID','=', 16230)
-            ->where('ac_academicPeriods.acEndDate', '>=', $today)
-            //->where('ac_academicPeriods.id', '=', 63)
-            ->select('ac_academicPeriods.id','ac_academicPeriods.code')
-            ->distinct()
-            ->get();
-        dd($courses);
-        $data = DB::table('ac_classAssesments')
-            ->join('ac_gradeBooks', 'ac_classAssesments.id', '=', 'ac_gradeBooks.classAssessmentID')
-            ->join('ac_classes', 'ac_classAssesments.classID', '=', 'ac_classes.id')
-            ->join('ac_courses', 'ac_classes.courseID', '=', 'ac_courses.id')
-            ->where('ac_gradeBooks.userID','=',16230)
-           // ->where('ac_gradeBooks.grade','>',50)
-            ->select('ac_classAssesments.*', 'ac_gradeBooks.*', 'ac_classes.*', 'ac_courses.*')
-            ->get();
-        dd(RegistrationController::classesAttended(16230,4,0,0,0,73));
-        $courses = DB::table('ac_academicPeriods')
-            ->join('ac_classes', 'ac_academicPeriods.id', '=', 'ac_classes.academicPeriodID')
-            ->join('ac_courses', 'ac_classes.courseID', '=', 'ac_courses.id')
-            ->join('ac_programCourses', 'ac_courses.id', '=', 'ac_programCourses.courseID')
-            ->join('users', 'ac_classes.instructorID', '=', 'users.id')
-            ->join('ac_programs', 'ac_programCourses.programID', '=', 'ac_programs.id')
-            ->where('ac_programs.id', $programID)
-            ->where('ac_programCourses.level_id', 1)
-            ->where('ac_academicPeriods.intakeID', $intakeID)
-            ->where('ac_academicPeriods.studymodeIDAllowed', $studymodeID)
-            ->where('ac_academicPeriods.type', $typeID)
-            ->where('ac_academicPeriods.acEndDate', '>=', $today)
-            //->where('ac_academicPeriods.id', '=', 63)
-            ->select('ac_courses.code', 'ac_courses.name','ac_academicPeriods.id','ac_classes.id')
-            ->get();
-        foreach ($courses as $course) {
-            $enrollment = DB::table('ac_enrollments')
-                ->where('userID', $id->id)
-                ->where('classID', $course->id)
-                ->first();
-            if ($enrollment) {
-                $course->enrolled = true;
-            } else {
-                $course->enrolled = false;
+        //  return view('pages.support_team.students.show', compact('data'));
+
+        //$id = Qs::decodeHash($id->id);
+        $data = self::jsondata($id->id);
+        //$accounting = self::useraccounting($id->id);
+        $userProgram = $data['enrolledPrograms'][0]['userProgramID'];
+        //dd($accounting);
+        //$enrollments = StudentProfileController::studentAcademicData($id->id);
+        //dd($enrollments);
+        //$dat = RegistrationController::classesAttended(16230,4,0,0,0,73);
+        $dat = RegistrationController::classesAttended($id->id, $programID->programID, 0, $mode, 0, 73);
+        //dd($dat);
+        //dd($this->preparecourse($dat));
+        //dd(RegistrationController::classesAttended(7727,19,0,0,0,73));//16230//7727=>19
+        //$data = $this->studentrecordsRepo->getAllwithOtherInfor($id);
+        //return view('pages.support_team.students.enrollments.enroll',compact('data','enrollments','accounting','dat'));
+        return view('pages.support_team.students.enrollments.enroll', compact('data', 'dat'));
+    }
+
+    public function preparecourse($dat)
+    {
+        if ($dat['selectedAcademicPeriod']['type_int'] == 0) {
+            $courses = [];
+            if ($dat['progression']['progression'] == 3) {
+                foreach ($dat['selectedAcademicPeriod']['next_classes'] as $index => $Aclass) {
+                    $courses[] = [
+                        'course_code' => $Aclass['course_code'],
+                        'course_name' => $Aclass['course_name'],
+                        'key' => $Aclass['key'],
+                        'status' => 'Repeat year',
+                        'progression' => 3
+                    ];
+                }
+            } elseif ($dat['progression']['progression'] == 2) {
+                foreach ($dat['progression']['courses'] as $index => $Aclass) {
+                    $courses[] = [
+                        'course_code' => $Aclass['course_code'],
+                        'course_name' => $Aclass['course_name'],
+                        'key' => $Aclass['key'],
+                        'status' => 'Part Time',
+                        'progression' => 2
+                    ];
+                }
+            } elseif ($dat['progression']['progression'] == 1 && ($dat['studyModeID'] == 1 || $dat['studyModeID'] == 3)) {
+                foreach ($dat['progression']['courses'] as $index => $Aclass) {
+                    $courses[] = [
+                        'course_code' => $Aclass['course_code'],
+                        'course_name' => $Aclass['course_name'],
+                        'key' => $Aclass['key'],
+                        'status' => 'Repeat',
+                        'progression' => 1
+                    ];
+                }
+                foreach ($dat['selectedAcademicPeriod']['next_classes'] as $index => $Aclass) {
+                    $courses[] = [
+                        'course_code' => $Aclass['course_code'],
+                        'course_name' => $Aclass['course_name'],
+                        'key' => $Aclass['key'],
+                        'status' => '',
+                        'progression' => 1
+                    ];
+                }
+            } elseif ($dat['progression']['progression'] == 0 && ($dat['studyModeID'] == 1 || $dat['studyModeID'] == 3)) {
+                if (count($dat['selectedAcademicPeriod']['next_classes']) !== 0) {
+                    foreach ($dat['selectedAcademicPeriod']['next_classes'] as $index => $Aclass) {
+                        $courses[] = [
+                            'course_code' => $Aclass['course_code'],
+                            'course_name' => $Aclass['course_name'],
+                            'key' => $Aclass['key'],
+                            'status' => '',
+                            'progression' => 0
+                        ];
+                    }
+                }
+            }
+
+            if ($dat['progression']['progression'] == 1 && $dat['studyModeID'] == 2) {
+                foreach ($dat['progression']['courses'] as $index => $Aclass) {
+                    $courses[] = [
+                        'course_code' => $Aclass['course_code'],
+                        'course_name' => $Aclass['course_name'],
+                        'key' => $Aclass['key'],
+                        'status' => 'Repeat',
+                        'progression' => 1
+                    ];
+                }
+            }
+
+            if ($dat['selectedAcademicPeriod']['type_int'] == 0 && $dat['progression']['progression'] == 0 && $dat['studyModeID'] == 2) {
+                if (count($dat['selectedAcademicPeriod']['next_classes']) !== 0) {
+
+                    foreach ($dat['selectedAcademicPeriod']['next_classes'] as $index => $Aclass) {
+                        $courses[] = [
+                            'course_code' => $Aclass['course_code'],
+                            'course_name' => $Aclass['course_name'],
+                            'key' => $Aclass['key'],
+                            'status' => '',
+                            'progression' => 0
+                        ];
+                    }
+                }
+            }
+
+            if ($dat['selectedAcademicPeriod']['type_int'] == 0 && $dat['progression']['progression'] == 1 && $dat['studyModeID'] == 2) {
+                if (count($dat['selectedAcademicPeriod']['next_classes']) !== 0) {
+                    foreach ($dat['selectedAcademicPeriod']['next_classes'] as $index => $Aclass) {
+                        $courses[] = [
+                            'course_code' => $Aclass['course_code'],
+                            'course_name' => $Aclass['course_name'],
+                            'key' => $Aclass['key'],
+                            'status' => '',
+                            'progression' => 0
+                        ];
+                    }
+                }
             }
         }
-        return view('pages.support_team.students.show', compact('data'));
+        return $courses;
+    }
+
+    public function register($selectedClasses,$userid,$period)
+    {
+        foreach ($selectedClasses as $class) {
+            if ($class['status'] == '') {
+                Enrollment::create([
+                    'userID' => $userid,
+                    'classID' => $class['key'],
+                    'key' => $userid. '-' . $class['key'] . '-' . $period,
+                ]);
+            } else {
+                $course = Courses::where('code', $class['course_code'])->first();
+                $_class = Classes::where('academicPeriodID', $period)->where('courseID', $course->id)->first();
+                if ($_class) {
+                    Enrollment::create([
+                        'userID' => $userid,
+                        'classID' => $_class->id,
+                        'repeatStatus' => 1,
+                        'key' => $userid. '-' . $class['key'] . '-' . $period,
+                    ]);
+                }
+            }
+        }
     }
 
     /**
@@ -147,6 +243,22 @@ class RegistrationController extends Controller
     {
         //
     }
+
+    public function programs()
+    {
+        $id = Auth::user();
+        //$data = self::jsondata($id->id);
+        //$accounting = self::useraccounting($id->id);
+        //$userProgram = $data['enrolledPrograms'][0]['userProgramID'];
+        //dd($accounting);
+        $enrollments = StudentProfileController::studentAcademicData($id->id);
+        //dd($enrollments);
+        //$dat = RegistrationController::classesAttended(16230,4,0,0,0,73);
+        //dd(RegistrationController::classesAttended(7727,19,0,0,0,73));//16230//7727=>19
+        //$data = $this->studentrecordsRepo->getAllwithOtherInfor($id);
+        return view('pages.support_team.students.enrollments.programs', compact('enrollments'));
+    }
+
     public static function score($marks)
     {
         //  $marks = 0;
@@ -230,19 +342,14 @@ class RegistrationController extends Controller
         return $marks;
 
     }
+
     //register
-    public function classesAttended($userID,$program,$intake,$studyMode,$typeID,$academic)
-    //public function classesAttended(Request $request)
+    public static function classesAttended($userID, $program, $intake, $studyMode, $typeID, $academic)
+        //public function classesAttended(Request $request)
     {
-
-
-
-        /* try {*/
-
         # Find if student is degree student and add the value to the academic period data function
         //$userProgram = UserProgram::where('programID', request('programID'))->where('userID', request('userid'))->get()->first();
         $userProgram = UserProgram::where('programID', $program)->where('userID', $userID)->get()->first();
-
         $certification = $userProgram->program->qualification->name;
 
         switch ($certification) {
@@ -255,28 +362,27 @@ class RegistrationController extends Controller
         }
 
 
-        $enrollments       = Enrollment::where('userID',$userID)->get();
-
+        $enrollments = Enrollment::where('userID', $userID)->get();
 
 
         if ($certification == 'Degree' || $certification == 'Diploma') {
 
 
-           // $academicPeriod    = AcademicPeriods::data(request('academicPeriodID'), 0, request('userid'), $is_degree_student);
-            $academicPeriod    = AcademicPeriods::data($academic, 0, $userID, $is_degree_student);
+            // $academicPeriod    = AcademicPeriods::data(request('academicPeriodID'), 0, request('userid'), $is_degree_student);
+            $academicPeriod = AcademicPeriods::data($academic, 0, $userID, $is_degree_student);
         } else {
-            $academicPeriod    = AcademicPeriods::data($academic, 1, $userID, $is_degree_student, $program);
+            $academicPeriod = AcademicPeriods::data($academic, 1, $userID, $is_degree_student, $program);
         }
         $classes = [];
         foreach ($enrollments as $enrollment) {
-            $class         = Classes::data($enrollment->classID, 0, $userID);
-            $classes[]     = $class;
+            $class = Classes::data($enrollment->classID, 0, $userID);
+            $classes[] = $class;
         }
 
         //$previousEnrollment = Enrollment::where('userID', request('userid'))->get()->last();
         $previousEnrollment = Enrollment::where('userID', $userID)->get()->last();
-        $comments           = Progression::comments($userID, $previousEnrollment->class->academicPeriod->id);
-        $progression        = Progression::checkProgression($comments);
+        $comments = Progression::comments($userID, $previousEnrollment->class->academicPeriod->id);
+        $progression = Progression::checkProgression($comments);
 
 
         $oldAcademicPeriodIds = [];
@@ -284,7 +390,7 @@ class RegistrationController extends Controller
         foreach ($enrollments as $enrollment) {
             $oldAcademicPeriodIds[] = $enrollment->class->academicPeriod->id;
         }
-        $has_registered =0;
+        $has_registered = 0;
 
         foreach ($oldAcademicPeriodIds as $oldAcademicPeriodID) {
 
@@ -294,14 +400,13 @@ class RegistrationController extends Controller
             # $addTen= strtotime($timeFactor->lateRegistrationDate)+10;
 
 
-
             #add 10 days to late registration
 
-            $addTen = date('Y-m-d', strtotime($timeFactor->lateRegistrationDate. ' + 10 days'));
+            $addTen = date('Y-m-d', strtotime($timeFactor->lateRegistrationDate . ' + 10 days'));
 
-            if($addTen < date("Y-m-d")){
+            if ($addTen < date("Y-m-d")) {
                 $has_registered = 5;
-            }else {
+            } else {
                 if ($oldAcademicPeriodID == $academic) {
                     # User has registered for this academic period before
                     $has_registered = 1;
@@ -313,21 +418,19 @@ class RegistrationController extends Controller
 
         }
         # Find next classes
-        $nextClasses   = AcademicPeriods::nextClasses($userID, $academic);
+        $nextClasses = AcademicPeriods::nextClasses($userID, $academic);
 
         $failedClasses = $comments['coursesFailed'];
         $passedClasses = $comments['coursesPassed'];
 
 
-
-        $userMode           = UserStudyModes::where('userID', $userID)->get()->last();
-        $semesterStatus     = General::checkStudentsSemester($userID);
-
+        $userMode = UserStudyModes::where('userID', $userID)->get()->last();
+        $semesterStatus = General::checkStudentsSemester($userID);
 
 
         //$academicPeriod['next_classes'] = Progression::classCalcualtor($nextClasses, $failedClasses, $passedClasses);
 
-        if((int)$progression['progression'] > 2){
+        if ((int)$progression['progression'] > 2) {
 
 
             // $academicPeriod['next_classes'] = Progression:: classCheck(request('academicPeriodID'),$failedClasses, $passedClasses);
@@ -339,29 +442,30 @@ class RegistrationController extends Controller
 
             return $data = [
                 'selectedAcademicPeriod' => $academicPeriod,
-                'classes'                => $classes,
-                'resultsdata'            => $comments,
-                'progression'            => $progression,
-                'has_registered'         => $has_registered,
-                'covid_affected'         => 0,
-                'studyModeID'            => $userMode->studyModeID,
-                'semesterStatus'         => $semesterStatus,
+                'classes' => $classes,
+                'resultsdata' => $comments,
+                'progression' => $progression,
+                'has_registered' => $has_registered,
+                'covid_affected' => 0,
+                'studyModeID' => $userMode->studyModeID,
+                'semesterStatus' => $semesterStatus,
             ];
 
-        }else{
+        } else {
             $academicPeriod['next_classes'] = Progression::classCalcualtor($nextClasses, $failedClasses, $passedClasses);
 
             return $data = [
                 'selectedAcademicPeriod' => $academicPeriod,
-                'classes'                => $classes,
-                'resultsdata'            => $comments,
-                'progression'            => $progression,
-                'has_registered'         => $has_registered,
-                'covid_affected'         => 0,
-                'studyModeID'            => $userMode->studyModeID,
-                'semesterStatus'         => $semesterStatus,
+                'classes' => $classes,
+                'resultsdata' => $comments,
+                'progression' => $progression,
+                'has_registered' => $has_registered,
+                'covid_affected' => 0,
+                'studyModeID' => $userMode->studyModeID,
+                'semesterStatus' => $semesterStatus,
             ];
 
         }
     }
+
 }

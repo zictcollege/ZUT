@@ -13,6 +13,7 @@ use App\Http\Controllers\Academics\ProgramCoursesController;
 use App\Http\Controllers\Academics\ProgramsController;
 use App\Http\Controllers\Academics\QualicationsController;
 use App\Http\Controllers\MyAccountController;
+use App\Http\Controllers\student\ApplicationsController;
 use App\Http\Controllers\Student\RegistrationController;
 use App\Http\Controllers\SuperAdmin\SettingsController;
 use App\Http\Controllers\SupportTeam\AcademicFeesController;
@@ -22,6 +23,7 @@ use App\Http\Controllers\SupportTeam\StudentProfileController;
 use App\Http\Controllers\SupportTeam\StudentRecordController;
 use App\Http\Controllers\SupportTeam\StudyModeController;
 use App\Http\Controllers\SupportTeam\UsersController;
+use App\Http\Middleware\Custom\SuperAdmin;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -43,14 +45,15 @@ Route::group(['middleware' => 'auth'], function () {
 
     Route::get('/', function () {
        // return view('welcome');
-        return view('home');
+        //return view('home');
+        return view('pages.support_team.dashboard');
     });
 
     //Route::get('/', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/home', [App\Http\Controllers\HomeController::class, 'index'])->name('home');
     Route::get('/dashboard', [App\Http\Controllers\HomeController::class,'dashboard'])->name('dashboard');
 
-    Route::group(['prefix' => 'academics'], function() {
+    Route::group(['middleware' => SuperAdmin::class,'prefix' => 'academics'], function() {
         Route::get('/', [AcademicPeriodsController::class,'index'])->name('calendar');
         Route::post('/create', [AcademicPeriodsController::class,'store'])->name('create');
         Route::get('/edit/{id}', [AcademicPeriodsController::class,'edit'])->name('update');
@@ -76,6 +79,7 @@ Route::group(['middleware' => 'auth'], function () {
         Route::group(['prefix' => 'classes'], function (){
             Route::post('/add',[ClassesController::class,'store'])->name('store.classes');
             Route::delete('/delete/{id}',[ClassesController::class,'destroy'])->name('classes.delete');
+            Route::get('/show/{period}/{program}',[ClassesController::class,'customShow'])->name('classes.customShow');
         });
     });
 
@@ -100,7 +104,50 @@ Route::group(['middleware' => 'auth'], function () {
     Route::group(['prefix' => 'assess'], function (){
         Route::get('/classes/{id}',[ClassAssessmentsController::class,'getClasses'])->name('class-names');
     });
+    Route::group(['prefix' => 'academic'], function (){
+        Route::get('/',[RegistrationController::class,'programs'])->name('my-program');
+    });
+    Route::group(['prefix' => 'apply'], function (){
+        //get
+        Route::get('/change-program',[ApplicationsController::class,'ChangePrograms'])->name('changePrograms');
+        Route::get('/exemptions',[ApplicationsController::class,'Exemption'])->name('exemptions');
+        Route::get('/withdrawal-deferment',[ApplicationsController::class,'WithDef'])->name('Withdrawal_Deferment');
+        Route::get('/add-drop',[ApplicationsController::class,'ADCourses'])->name('Add_Drop_courses');
+        Route::get('/study-mode',[ApplicationsController::class,'ChangeStudyMode'])->name('change_mode');
+        //post change_program_apply
+        Route::post('/change-program',[ApplicationsController::class,'ChangeProgramsApply'])->name('change_program_apply');
+    });
+    Route::group(['prefix' => 'student'], function (){
+        Route::get('/finances',[StudentProfileController::class,'MyFinances'])->name('student_finance');
+        Route::get('/results',[StudentProfileController::class,'MyResults'])->name('student-exam_results');
+        Route::get('/ca-results',[StudentProfileController::class,'MyCAResults'])->name('student_ca_results');
+        Route::get('/exam-registration',[StudentProfileController::class,'ExamRegistration'])->name('student-exam_registration');
+        Route::get('/profile/{user_id}',[StudentProfileController::class,'profile'])->name('profile');
+    });
 
+    Route::group(['prefix' => 'classAssessments'], function (){
+        Route::post('/updateExams/{id}',[ClassAssessmentsController::class,'UpdateTotalResultsExams'])->name('classExamUpdateTotal');
+        Route::post('/process',[ClassAssessmentsController::class,'ProcessUploadedResults'])->name('import.process');
+        Route::get('/results-programs/{id}',[ClassAssessmentsController::class,'ProgramForResults'])->name('program-names');
+        Route::get('/student-list/{class}/{assessid}',[ClassAssessmentsController::class,'StudentListResults'])->name('myClassStudentList');
+        Route::get('/class-list/{id}',[ClassAssessmentsController::class,'getClassesToPublish'])->name('myClassList');
+        Route::post('/post-results',[ClassAssessmentsController::class,'PostStudentResults'])->name('postedResults.process');
+        Route::get('/publish-program-list/{id}',[ClassAssessmentsController::class,'GetProgramsToPublish'])->name('getPublishPrograms');
+        Route::get('/program-results/{aid}/{pid}',[ClassAssessmentsController::class,'GetProgramResults'])->name('getPramResults');
+        Route::post('/publish-program-results',[ClassAssessmentsController::class,'PublishProgramResults'])->name('publishProgramResults');
+        Route::post('/update-results-publish/{id}',[ClassAssessmentsController::class,'UpdateResultsPublish'])->name('resultsPublish');
+        Route::post('/get-results-update',[ClassAssessmentsController::class,'getAssessToUpdate'])->name('update.assessments');
+        Route::get('/program-results-levels',[ClassAssessmentsController::class,'GetProgramResultsLevel'])->name('getPramResultsLevel');
+        Route::post('/board-exam-update',[ClassAssessmentsController::class,'BoardofExaminersUpdateResults'])->name('BoardofExaminersUpdateResults');
+//not working
+        Route::post('/load-more',[ClassAssessmentsController::class,'LoadMoreResults'])->name('load.more.results.board');
+
+        Route::group(['prefix' => 'reports'], function (){
+            Route::get('/{id}',[\App\Http\Controllers\Academics\AssessmentReportsController::class,'index'])->name('reports.index');
+        });
+    });
+
+        Route::resource('apply', ApplicationsController::class);
         Route::resource('classAssessments',ClassAssessmentsController::class);
         Route::resource('assessments',AssessmentsTypesController::class);
         Route::resource('students', StudentRecordController::class);

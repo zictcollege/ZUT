@@ -1,21 +1,10 @@
 <?php
 
-namespace App\Traits\Enrollment;
+namespace App\Support\Registration;
 
 use Illuminate\Http\Request;
-use App\Models\Academic\AcademicPeriod;
-use App\Models\Academic\AcademicPeriodFee;
-use App\Models\Academic\AcClass;
-use App\Models\Academic\Course;
-use App\Models\Academic\Enrollment;
-use App\Models\Academic\GradeBook;
-use App\Models\Academic\Program;
-use App\Models\Academic\ProgramCourse;
-use App\Models\Academic\StudyMode;
-use App\Models\Academic\UserMode;
 use App\Models\Accounting\Fee;
 use App\Models\Admissions\UserProgram;
-use App\Temp2;
 
 use App\Traits\Finance\Accounting\Invoicing;
 use App\Traits\User\General;

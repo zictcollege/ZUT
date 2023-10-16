@@ -1,8 +1,8 @@
 <?php
 
-namespace App;
+namespace App\Models\Results;
 use Illuminate\Support\Facades\DB;
-use App\StudentResults;
+//use App\StudentResults;
 
 use Illuminate\Database\Eloquent\Model;
 

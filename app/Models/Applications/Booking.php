@@ -4,7 +4,6 @@ namespace App\Models\Applications;
 
 use App\Models\Accounting\Quotation;
 use App\Models\User;
-use App\Room;
 use Illuminate\Database\Eloquent\Model;
 
 class Booking extends Model

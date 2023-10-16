@@ -2,13 +2,11 @@
 
 namespace App\Traits\Academics;
 
-
-use App\User;
-use App\Models\Academic\AcademicPeriod;
-use App\Models\Academic\ProgramCourse;
-use App\Models\Academic\AcAddDropCourseRequests;
-use App\Models\Academic\AcClass;
-use App\Models\Academic\Enrollment;
+use App\Models\Academics\AcademicPeriods;
+use App\Models\Academics\Classes;
+use App\Models\Admissions\ProgramCourses;
+use App\Models\Applications\AcAddDropCourseRequests;
+use App\Models\Enrollment;
 use App\Traits\User\General;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -16,6 +14,7 @@ use Illuminate\Http\Request;
 
 trait AddDropCourseTrait
 {
+    use General;
     public function getStudentAddDropCourseData(Request $request)
     {
         $courseIDs                  = [];
@@ -23,9 +22,9 @@ trait AddDropCourseTrait
         $availableClasses           = [];
         $programRunningCourseIDs    = [];
 
-        $currentAPID                = General::getCurrentAcademicPeriodID(request('userID'));
-        $allRunningClasses          = AcClass::where('academicPeriodID', $currentAPID)->get();
-        $programCourses             = ProgramCourse::where('programID', request('programID'))->get();
+        $currentAPID                = self::getCurrentAcademicPeriodID(request('userID'));
+        $allRunningClasses          = Classes::where('academicPeriodID', $currentAPID)->get();
+        $programCourses             = ProgramCourses::where('programID', request('programID'))->get();
 
         foreach ($allRunningClasses as $class) {
             $courseIDs[] = $class->courseID;
@@ -34,18 +33,18 @@ trait AddDropCourseTrait
             $programRunningCourseIDs[] = $programCourse->courseID;
         }
         if ($programRunningCourseIDs) {
-            $availableClassIDs = AcClass::whereIn('courseID', $programRunningCourseIDs)->where('academicPeriodID', $currentAPID)->get();
+            $availableClassIDs = Classes::whereIn('courseID', $programRunningCourseIDs)->where('academicPeriodID', $currentAPID)->get();
             if (!empty($availableClassIDs)) {
                 foreach ($availableClassIDs as $availableClassID) {
                     if ($availableClassID && $availableClassID->id) {
-                        $availableClasses[] = AcClass::data($availableClassID->id);
+                        $availableClasses[] = Classes::data($availableClassID->id);
                     }
                 }
             }
         }
         return [
             'availableClasses'  => $availableClasses,
-            'currentClasses'    => AcademicPeriod::myclasses(request('userID'), $currentAPID),
+            'currentClasses'    => AcademicPeriods::myclasses(request('userID'), $currentAPID),
         ];
     }
     public function cancelApplication(Request $request)
@@ -79,7 +78,7 @@ trait AddDropCourseTrait
 
         AcAddDropCourseRequests::create([
             'userID'            => request('userID'),
-            'academicPeriodID'  => General::getCurrentAcademicPeriodID(request('userID')),
+            'academicPeriodID'  => self::getCurrentAcademicPeriodID(request('userID')),
             'programID'         => request('programID'),
             'addClassIDs'       => $selectedAddCourseIDs,
             'dropClassIDs'      => $selectedDropCourseIDs,

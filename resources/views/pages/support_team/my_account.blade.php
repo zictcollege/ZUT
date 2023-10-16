@@ -72,23 +72,33 @@
                                 </tr>
                                 <tr>
                                     <td class="font-weight-bold text-justify">Date of Birth</td>
+                                    @if($data['personalinfo'])
                                     <td>{{ $data['personalinfo']->dob }}</td>
+                                    @endif
                                 </tr>
                                 <tr>
                                     <td class="font-weight-bold text-justify">Marital Status</td>
+                                    @if($data['personalinfo'])
                                     <td>{{ $data['personalinfo']->marital_status }}</td>
+                                    @endif
                                 </tr>
                                 <tr>
                                     <td class="font-weight-bold text-justify">Street</td>
+                                    @if($data['personalinfo'])
                                     <td>{{ $data['personalinfo']->street_main }}</td>
+                                    @endif
                                 </tr>
                                 <tr>
                                     <td class="font-weight-bold text-justify">Telephone</td>
+                                    @if($data['personalinfo'])
                                     <td>{{ $data['personalinfo']->telephone }}</td>
+                                    @endif
                                 </tr>
                                 <tr>
                                     <td class="font-weight-bold text-justify">Mobile</td>
+                                    @if($data['personalinfo'] )
                                     <td>{{ $data['personalinfo']->mobile }}</td>
+                                    @endif
                                 </tr>
                                 </tbody>
                             </table>

@@ -19,7 +19,10 @@
                 <div class="card-body">
                     <ul class="nav nav-tabs nav-tabs-highlight">
                         <li class="nav-item">
-                            <a href="#" class="nav-link active" >{{ $user->first_name.' '.$user->middle_name.' '.$user->last_name }}</a>
+                            <a href="#basic-info" class="nav-link active" data-toggle="tab">Personal Information</a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="#sponsor-info" class="nav-link" data-toggle="tab">Sponsor Information</a>
                         </li>
                     </ul>
 
@@ -29,16 +32,12 @@
                             <table class="table table-bordered">
                                 <tbody>
                                 <tr>
-                                    <td class="font-weight-bold">Name</td>
-                                    <td>{{ $user->first_name.' '.$user->middle_name.' '.$user->last_name }}</td>
-                                </tr>
-                                <tr>
                                     <td class="font-weight-bold">Gender</td>
                                     <td>{{ $user->gender }}</td>
                                 </tr>
                                 <tr>
-                                    <td class="font-weight-bold">Address</td>
-                                    <td>{{ $user->address }}</td>
+                                    <td class="font-weight-bold">NRC</td>
+                                    <td>{{ $user->nrc }}</td>
                                 </tr>
                                 @if($user->email)
                                     <tr>
@@ -46,34 +45,48 @@
                                         <td>{{$user->email }}</td>
                                     </tr>
                                 @endif
-                                @if($user->username)
+                                @if($user->personalinfo)
                                     <tr>
-                                        <td class="font-weight-bold">Username</td>
-                                        <td>{{$user->username }}</td>
+                                        <td class="font-weight-bold">Date of Birth</td>
+                                        <td>{{ date($user->personalinfo->dob ) }}</td>
                                     </tr>
                                 @endif
-                                @if($user->phone)
+                                @if($user->personalinfo)
                                     <tr>
                                         <td class="font-weight-bold">Phone</td>
-                                        <td>{{$user->phone.' '.$user->phone2 }}</td>
+                                        <td>{{$user->personalinfo->mobile.' / '.$user->personalinfo->telephone }}</td>
                                     </tr>
                                 @endif
-                                <tr>
-                                    <td class="font-weight-bold">Birthday</td>
-                                    <td>{{$user->dob }}</td>
-                                </tr>
-                                @if($user->nal_id)
+                                @if($user->personalinfo)
+                                    <tr>
+                                        <td class="font-weight-bold">Marital Status</td>
+                                        <td>{{$user->personalinfo->marital_status }}</td>
+                                    </tr>
+                                @endif
+                                @if($user->personalinfo)
+                                    <tr>
+                                        <td class="font-weight-bold">Street</td>
+                                        <td>{{ $user->personalinfo->street_main }}</td>
+                                    </tr>
+                                @endif
+                                @if($user->personalinfo)
                                     <tr>
                                         <td class="font-weight-bold">Nationality</td>
-                                        <td>{{$user->nationality->name }}</td>
+                                        <td>{{$user->personalinfo->nationality }}</td>
                                     </tr>
                                 @endif
-                                @if($user->state_id)
-                                    <tr>
-                                        <td class="font-weight-bold">NRC</td>
-                                        <td>{{$user->NRC}}</td>
-                                    </tr>
-                                @endif
+                                    @if($user->personalinfo)
+                                        <tr>
+                                            <td class="font-weight-bold">Province</td>
+                                            <td>{{$user->personalinfo->province_state }}</td>
+                                        </tr>
+                                    @endif
+                                    @if($user->personalinfo)
+                                        <tr>
+                                            <td class="font-weight-bold">Nationality</td>
+                                            <td>{{$user->personalinfo->nationality }}</td>
+                                        </tr>
+                                    @endif
 
                                 @if($user->user_type == 'teacher')
                                     <tr>
@@ -83,6 +96,49 @@
                                                 <span> - {{ $sub->name.' ('.$sub->my_class->name.')' }}</span><br>
                                             @endforeach
                                         </td>
+                                    </tr>
+                                @endif
+
+                                </tbody>
+                            </table>
+                        </div>
+                        <div class="tab-pane fade show" id="sponsor-info">
+                            <table class="table table-bordered">
+                                <tbody>
+                                @if($user->nextofkin)
+                                <tr>
+                                    <td class="font-weight-bold">Name</td>
+                                    <td>{{ $user->nextofkin->full_name }}</td>
+                                </tr>
+                                @endif
+                                @if($user->nextofkin)
+                                <tr>
+                                    <td class="font-weight-bold">Relationship</td>
+                                    <td>{{ $user->nextofkin->relationship }}</td>
+                                </tr>
+                                @endif
+                                @if($user->nextofkin)
+                                <tr>
+                                    <td class="font-weight-bold">Phone</td>
+                                    <td>{{ $user->nextofkin->phone }}</td>
+                                </tr>
+                                @endif
+                                @if($user->nextofkin)
+                                    <tr>
+                                        <td class="font-weight-bold">City</td>
+                                        <td>{{$user->nextofkin->city }}</td>
+                                    </tr>
+                                @endif
+                                @if($user->nextofkin)
+                                    <tr>
+                                        <td class="font-weight-bold">Province</td>
+                                        <td>{{ $user->nextofkin->province }}</td>
+                                    </tr>
+                                @endif
+                                @if($user->nextofkin)
+                                    <tr>
+                                        <td class="font-weight-bold">Country</td>
+                                        <td>{{ $user->nextofkin->country  }}</td>
                                     </tr>
                                 @endif
 

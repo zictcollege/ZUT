@@ -2,19 +2,21 @@
 
 namespace App\Models\Admissions;
 
-use App\Models\Academic\AcClass;
+use App\Models\Academics\Classes;
 use App\Models\Accounting\Invoice;
 use App\Models\Accounting\ProfomaInvoice;
+use App\Models\Applications\StudentAdmissionRequest;
+use App\Models\User;
 use App\Traits\Finance\Accounting\Invoicing;
-use App\Models\Admissions\StudentAdmissionRequest;
-use App\User;
 use Illuminate\Database\Eloquent\Model;
 
 class PreActivation extends Model
 {
 
+    use Invoicing;
     protected $table = "ac_pre_activations";
     protected $guarded = ['id'];
+
 
 
     public function classes()
@@ -47,7 +49,6 @@ class PreActivation extends Model
             'programID'         => $programID,
             'paymentPlanID'     => $paymentPlanID,
             'academicPeriodID'  => $academicPeriodID,
-            'activatedBy'       => $activatedByID,
             'studyModeID'       => $study_mode['id'],
             'key'               => $userID . '-' . $academicPeriodID,
         ]);
@@ -56,7 +57,7 @@ class PreActivation extends Model
 
         foreach ($courses as $course) {
 
-            $class = AcClass::where('courseID', $course['id'])->where('academicPeriodID', $academicPeriodID)->first();
+            $class = Classes::where('courseID', $course['id'])->where('academicPeriodID', $academicPeriodID)->first();
 
             // Check if course has been posted
             $preActivationCourse = PreActivationCourses::where('activationID', $preActivation->id)->where('classID', $class->id)->get()->first();
@@ -91,7 +92,7 @@ class PreActivation extends Model
                 $lastRow        = PreActivation::where('userID', $user->id)->get()->last();
                 $profomaInvoice = ProfomaInvoice::where('userID', $user->id)->get()->last();
                 $details        = $profomaInvoice->details;
-                Invoicing::store($user->id, $details, $lastRow->academicPeriodID);
+                self::store($user->id, $details, $lastRow->academicPeriodID);
             }
         }
 
@@ -103,7 +104,7 @@ class PreActivation extends Model
             $profomaInvoice = ProfomaInvoice::where('userID', $user->id)->get()->last();
             if ($profomaInvoice) {
                 $details        = $profomaInvoice->details;
-                Invoicing::store($user->id, $details, $lastRow->academicPeriodID);
+                self::store($user->id, $details, $lastRow->academicPeriodID);
             }
         }
     }

@@ -27,7 +27,7 @@ trait Accounting
 
   public function useraccounting($id)
   {
-    $accounting = User::accounting($id);
+    $accounting = self::accounting($id);
     return $accounting;
   }
   public static function accounting($id)
@@ -70,7 +70,7 @@ trait Accounting
     $totalPaid = 0;
     foreach ($receipts as $receipt) {
 
-      if ($receipt->collectedBy) {
+      if (!empty($receipt->collectedBy->first_name)) {
         $collectedBy = $receipt->collected_by->first_name . ' ' . $receipt->collected_by->middle_name . ' ' . $receipt->collected_by->last_name;
       } else {
         $collectedBy = '';
@@ -111,7 +111,7 @@ trait Accounting
 
       $Quote = [
         'id'          => $quote->id,
-        'names'       => $quote->user->first_name . ' ' . $quote->user->middle_name . ' ' . $quote->user->last_name,
+        'names'       => $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name,
         'student_id'  => $student_id,
         'date'        => $quote->created_at->toFormattedDateString(),
         'total'       => env('BILLING_CURRENCY') . ' ' . number_format($quote->details->sum('ammount')),
@@ -451,7 +451,8 @@ trait Accounting
   public static function AcademicPaymentPercentage($userID, $AcademicPeriodID)
   {
 
-    $invoices = Invoice::where('user_id', $userID)->where('academicPeriodID', $AcademicPeriodID)->get();
+    //$invoices = Invoice::where('user_id', $userID)->where('academicPeriodID', $AcademicPeriodID)->get();
+      $invoices = Invoice::where('user_id', $userID)->get();
     $invoiceTotal = 0.00;
 
     if ($invoices) {

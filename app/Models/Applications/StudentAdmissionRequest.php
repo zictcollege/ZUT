@@ -9,6 +9,7 @@ use App\Models\Academics\Classes;
 use App\Models\Academics\Programs;
 use App\Models\Academics\StudyModes;
 use App\Models\Accounting\PaymentPlan;
+use App\Models\Admissions\ProgramCourses;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
@@ -55,7 +56,7 @@ class StudentAdmissionRequest extends Model
         $possibleAcademicPeriodID   = '';
         $paymentPlanID              = '';
 
-        $programCourses     = ProgramCourse::where('programID', $request->programID)->get();
+        $programCourses     = ProgramCourses::where('programID', $request->programID)->get();
         if ($programCourses) {
             foreach ($programCourses as $programCourse) {
                 $pCourseIDs[] =  $programCourse->courseID;

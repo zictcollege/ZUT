@@ -20,6 +20,7 @@ use App\Repositories\UserModesRepo;
 use App\Repositories\UserPaymentPlan;
 use App\Repositories\UserProgramsRepo;
 use App\Repositories\UserRepo;
+use App\Support\General;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -257,4 +258,5 @@ class StudentRecordController extends Controller
         }
         return $year . $semester . $concat_studentnumber;
     }
+
 }

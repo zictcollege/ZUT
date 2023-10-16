@@ -2,12 +2,12 @@
 
 namespace App\Traits\Academics;
 
-use App\Models\Academic\AcClass;
-use App\Models\Academic\Course;
+use App\Http\Controllers\Student\RegistrationController;
 use App\Models\Academic\GradeBookImport;
-use App\Traits\Enrollment\Progression;
+use App\Models\Academics\Classes;
+use App\Models\Academics\Courses;
+use App\Models\User;
 use App\Traits\User\General;
-use App\User;
 use Notification;
 use Illuminate\Http\Request;
 
@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 trait BoardOfExaminer
 {
 
+    use General;
     public static function sortResultsImport($academicPeriodID, $programID)
     {
 
@@ -62,7 +63,7 @@ trait BoardOfExaminer
                         'courseCode'    => $importCourse->code,
                         'courseTitle'   => $importCourse->title,
                         'status'        => $status,
-                        'score'         => Progression::score($mark),
+                        'score'         => RegistrationController::score($mark),
                         'total'         => $importCourse->total,
                     ];
 
@@ -73,8 +74,8 @@ trait BoardOfExaminer
                     $importedCourses = [];
                 }
 
-                $userJsonFormat = General::jsondataMini($user->id);
-                $comments = BoardOfExaminer::comments($importedCourses);
+                $userJsonFormat = self::jsondataMini($user->id);
+                $comments = self::comments($importedCourses);
 
                 // check which courses will be published and provide status
 
@@ -83,7 +84,7 @@ trait BoardOfExaminer
                 Also, get students uploaded courses
 
                 */
-                $runningClasses = AcClass::where('academicPeriodID', $academicPeriodID)->get();
+                $runningClasses = Classes::where('academicPeriodID', $academicPeriodID)->get();
 
                 $coursesToPublish    = [];
                 $publishingStatus    = '';
@@ -91,7 +92,7 @@ trait BoardOfExaminer
                 $publishingComments  = [];
 
                 foreach ($runningClasses as $rClass) {
-                    $runningCourseCode = Course::where('id', $rClass->courseID)->get()->first();
+                    $runningCourseCode = Courses::where('id', $rClass->courseID)->get()->first();
 
                     foreach ($userCourses as $uc) {
                         if ($runningCourseCode->code == $uc->code) {
@@ -326,11 +327,11 @@ trait BoardOfExaminer
         // Check if student registered for this course
         // drop all courses that student registered for
         // Find course and class
-        $course = Course::where('code', $courseCode)->get()->first();
+        $course = Courses::where('code', $courseCode)->get()->first();
         $status = 0;
         if ($course) {
             // Find class and check if its running in academic period
-            $class = AcClass::where('courseID', $course->id)->where('academicPeriodID', $academicPeriodID)->get()->first();
+            $class = Classes::where('courseID', $course->id)->where('academicPeriodID', $academicPeriodID)->get()->first();
             if ($class) {
                 $status = 1;
             }

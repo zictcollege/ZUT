@@ -12,8 +12,8 @@
 
         <div class="card-body">
             <ul class="nav nav-tabs nav-tabs-highlight">
-                <li class="nav-item"><a href="#all-assessments" class="nav-link active" data-toggle="tab">Manage Courses</a></li>
-                <li class="nav-item"><a href="#new-assessments" class="nav-link" data-toggle="tab"><i class="icon-plus2"></i> Create New Course</a></li>
+                <li class="nav-item"><a href="#all-assessments" class="nav-link active" data-toggle="tab">Existing Assessments</a></li>
+                <li class="nav-item"><a href="#new-assessments" class="nav-link" data-toggle="tab"><i class="icon-plus2"></i> Create Assessments</a></li>
             </ul>
 
             <div class="tab-content">
@@ -22,7 +22,7 @@
                             <thead>
                             <tr>
                                 <th>S/N</th>
-                                <th>Course name</th>
+                                <th>Assessment Type</th>
                                 <th>Action</th>
                             </tr>
                             </thead>

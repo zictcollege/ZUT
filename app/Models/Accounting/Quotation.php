@@ -3,6 +3,7 @@
 namespace App\Models\Accounting;
 
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 class Quotation extends Model
@@ -27,18 +28,18 @@ class Quotation extends Model
 
     public function detail()
     {
-        return $this->hasOne(Quotation_detail::class);
+        return $this->hasOne(QuotationDetail::class);
     }
 
     // fetch all the quotations
     public function quotes()
     {
-        return $this->hasMany(Quotation_detail::class, 'quotation_id', 'id');
+        return $this->hasMany(QuotationDetail::class, 'quotation_id', 'id');
     }
 
     public function quotation_total($id)
     {
-        return $total = Quotation_detail::where('quotation_id', $id)->sum('ammount');
+        return $total = QuotationDetail::where('quotation_id', $id)->sum('ammount');
     }
 
     public static function last_quotation_total($id)
@@ -46,7 +47,7 @@ class Quotation extends Model
 
         $quotation = Quotation::all()->where('user_id', $id)->last();
         $quotation_id = $quotation->id;
-        return $total = Quotation_detail::where('quotation_id', $quotation_id)->sum('ammount');
+        return $total = QuotationDetail::where('quotation_id', $quotation_id)->sum('ammount');
     }
 
     public static function data($id)
@@ -63,7 +64,7 @@ class Quotation extends Model
 
         return $Quote = [
             'id'       => $quote->id,
-            'names'    => $quote->user->first_name . ' ' . $quote->user->middle_name . ' ' . $quote->user->last_name,
+            'names'    => $user->first_name . ' ' . $user->middle_name . ' ' . $user->last_name,
             'student_id'  => $student_id,
             'date'     => $quote->created_at->toFormattedDateString(),
             'total'    => number_format($quote->details->sum('ammount')),

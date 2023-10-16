@@ -2,17 +2,16 @@
 
 namespace App\Traits\Academics;
 
-
-use App\Models\Academic\AcademicPeriod;
-use App\Models\Academic\AcClass;
-use App\Models\Academic\Enrollment;
-use App\Models\Academic\Program;
-use App\Models\Academic\ProgramCourse;
-use App\Models\Academic\UserMode;
+use App\Models\Academics\AcademicPeriods;
+use App\Models\Academics\Classes;
+use App\Models\Academics\Programs;
+use App\Models\Admissions\ProgramCourses;
 use App\Models\Admissions\UserProgram;
-use App\Models\Audit\Trail;
-use App\User;
 
+use App\Models\Admissions\UserStudyModes;
+use App\Models\Audit\Trail;
+use App\Models\Enrollment;
+use App\Models\User;
 use Illuminate\Http\Request;
 
 
@@ -44,7 +43,7 @@ trait ExaminationReportTrait
         // Filter results with user modes table to get students who are in the provided mode 
         foreach ($userPrograms as $userProgram) {
 
-            $userMode = UserMode::where('userID', $userProgram->userID)->get()->last();
+            $userMode = UserStudyModes::where('userID', $userProgram->userID)->get()->last();
             if (!empty($userMode->studyModeID) && $userMode->studyModeID == $studyModeID) {
                 $users[] = User::find($userProgram->userID);
             }
@@ -67,7 +66,7 @@ trait ExaminationReportTrait
                     'email'                  => $user->email,
                     'gender'                 => $user->gender,
                     'programID'              => $programID,
-                    'enrollmentDistribution' => ExaminationReportTrait::enrollmentData($programID,$user->id),
+                    'enrollmentDistribution' => self::enrollmentData($programID,$user->id),
                 ];
 
                 $usersJson[] = $userJson;
@@ -86,7 +85,7 @@ trait ExaminationReportTrait
     {
 
         ini_set('max_execution_time', 300);
-        $program = Program::data($programID);
+        $program = Programs::data($programID);
 
         $data = [
             'auditTrail'  => Trail::examiationAudit($programID),
@@ -99,13 +98,13 @@ trait ExaminationReportTrait
     public static function enrollmentData($id,$userID) // UserProgramID
     {
         $userProgram    = UserProgram::where('programID',$id)->where('userID',$userID)->get()->last();
-        $programCourses = ProgramCourse::where('programID', $userProgram->programID)->get();
+        $programCourses = ProgramCourses::where('programID', $userProgram->programID)->get();
 
         foreach ($programCourses as $programCourse) {
             $courseIDs[] = $programCourse->courseID;
         }
 
-        $classes = AcClass::wherein('courseID', $courseIDs)->get();
+        $classes = Classes::wherein('courseID', $courseIDs)->get();
         foreach ($classes as $class) {
             $classIDs[] = $class->id;
         }
@@ -116,11 +115,11 @@ trait ExaminationReportTrait
 
         if (!empty($attendedClassIDs)) {
 
-            $myClasses = AcClass::wherein('id', $attendedClassIDs)->get()->unique('academicPeriodID');
+            $myClasses = Classes::wherein('id', $attendedClassIDs)->get()->unique('academicPeriodID');
 
             foreach ($myClasses as $class) {
-                $academicPeriod = AcademicPeriod::find($class->academicPeriodID);
-                $_ap            = AcademicPeriod::dataByUserEnrollment($academicPeriod->id, 0, $userProgram->userID);
+                $academicPeriod = AcademicPeriods::find($class->academicPeriodID);
+                $_ap            = AcademicPeriods::dataByUserEnrollment($academicPeriod->id, 0, $userProgram->userID);
                 $_aps[]         = $_ap;
             }
         }

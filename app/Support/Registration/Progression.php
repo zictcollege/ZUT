@@ -1,11 +1,10 @@
 <?php
 
-namespace App\Traits\Enrollment;
+namespace App\Support\Registration;
 
-use App\Models\Academic\AcademicPeriod;
-use App\Models\Academic\ClassAssessment;
-use App\Models\Academic\GradeBook;
-use App\Models\Academic\Program;
+use App\Models\Academics\AcademicPeriods;
+use App\Models\Academics\ClassAssessment;
+use App\Models\GradeBook;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
@@ -188,7 +187,7 @@ trait Progression
 
         // check all couses failed if they have passed in the current academic period.
 
-        $classes        = AcademicPeriod::myclasses($user_id, $academicPeriodID,0);  #1 parametter meets new requirements if one get all past classes
+        $classes        = AcademicPeriods::myclasses($user_id, $academicPeriodID,0);  #1 parametter meets new requirements if one get all past classes
         # Count the number of courses attempted
         $courseCount    = count($classes);
         $courses        = (object)$classes;

@@ -2,11 +2,10 @@
 
 namespace App\Models\Audit;
 
-use App\Models\Academic\AcademicPeriod;
-use App\Models\Academic\Program;
-use App\Models\Academic\StudyMode;
-use App\Report;
-use App\User;
+use App\Models\Academics\AcademicPeriods;
+use App\Models\Academics\Programs;
+use App\Models\Academics\StudyModes;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 
@@ -43,9 +42,9 @@ class ReportGenerator extends Model
         
 
         $requestParameters = json_decode($report->requestParameters);
-        $program = Program::dataMini($requestParameters->programID);
-        $academicPeriod = AcademicPeriod::dataMini($requestParameters->academicPeriodID);
-        $studyMode      = StudyMode::find($requestParameters->studyModeID);
+        $program = Programs::dataMini($requestParameters->programID);
+        $academicPeriod = AcademicPeriods::dataMini($requestParameters->academicPeriodID);
+        $studyMode      = StudyModes::find($requestParameters->studyModeID);
         return [
             'id'                => $report->id,
             'requestParameters' => $requestParameters,

@@ -8,6 +8,7 @@ use App\Http\Middleware\Custom\SuperAdmin;
 use App\Http\Middleware\Custom\TeamSA;
 use App\Http\Requests\AssessmentTypes\Assessments;
 use App\Http\Requests\AssessmentTypes\AssessmentsUpdate;
+use App\Models\Results\ImportList;
 use App\Repositories\AssessmentTypesRepo;
 use Illuminate\Http\Request;
 
@@ -84,7 +85,14 @@ class AssessmentsTypesController extends Controller
      */
     public function destroy(string $id)
     {
-        $this->assessmentRepo->find($id)->delete();
-        return back()->with('flash_success', __('msg.delete_ok'));
+        //check if assessment is already in the DB
+        $available = ImportList::where('assessmentID',$id)->get();
+
+        if ($available && count($available)>0){
+            return back()->with('flash_danger', __('msg.delete_not_okay'));
+        }else{
+            $this->assessmentRepo->find($id)->delete();
+            return back()->with('flash_success', __('msg.delete_ok'));
+        }
     }
 }

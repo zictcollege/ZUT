@@ -9,8 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class ImportList extends Model
 {
+    protected $table = "ac_gradebook_imports";
     protected $guarded =['id'];
-    protected $table = "ImportLists";
+    protected $fillable = ['academicPeriodID', 'programID', 'studentID', 'code', 'title', 'total', 'key', 'status', 'published', 'notifiedStudent', 'processed_by','assessmentID'];
 
     public function user()
     {

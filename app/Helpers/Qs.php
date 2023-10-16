@@ -40,6 +40,7 @@ class Qs
         return '    <div class="header-elements">
                     <div class="list-icons">
                         <a class="list-icons-item" data-action="collapse" aria-expanded="false"></a>
+                        <a class="list-icons-item reloadButton" data-action="reload"></a>
                         <a class="list-icons-item" data-action="remove"></a>
                     </div>
                 </div>';

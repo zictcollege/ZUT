@@ -15,6 +15,7 @@ use App\Models\Admissions\StudentRecord;
 use App\Models\Admissions\UserPersonalInformation;
 use App\Models\Admissions\UserProgram;
 use App\Models\Admissions\UserStudyModes;
+use App\Models\Applications\Booking;
 use App\Models\Enrollment;
 use App\Models\ExamRegistraion;
 use App\Models\User;
@@ -25,6 +26,7 @@ use Request;
 
 class General
 {
+    use Accounting;
 
     public function user($id)
     {
@@ -296,7 +298,7 @@ class General
             'gender'                   => $user->gender,
             'sms_id'                   => $user->guest_id,
             'student_id'               => $student_id,
-            'balance'                  => $user->balance($user->id),
+            'balance'                  => (new General)->balance($user->id),
             'last_login'               => $user->last_login_at,
             'last_seen'                => $last_seen,
             'ip_address'               => $user->last_login_ip,
@@ -474,7 +476,7 @@ class General
             'nrc'                      => $user->nrc,
             'sms_id'                   => $user->guest_id,
             'student_id'               => $student_id,
-            'balance'                  => number_format($user->balance($user->id)),
+            'balance'                  => number_format((new General)->balance($user->id)),
             'last_login'               => $user->last_login_at,
             'last_seen'                => $last_seen,
             'ip_address'               => $user->last_login_ip,
@@ -608,10 +610,10 @@ class General
 
 
         $AcademicProgression = General::getAcademicPaymentProgress($user->id, $apID);
-        $percent             = round(Accounting::AcademicPaymentPercentage($user->id, $apID));
+        $percent             = round(self::AcademicPaymentPercentage($user->id, $apID));
 
         # Exemptions
-        $exemption = Exemption::where('userID', $user->id)->get();
+        $exemption = \App\Models\Exemption::where('userID', $user->id)->get();
 
         if (!empty($exemption)) {
             # code...
@@ -657,7 +659,7 @@ class General
             'nrc'                      => $user->nrc,
             'sms_id'                   => $user->guest_id,
             'student_id'               => $student_id,
-            'balance'                  => $user->balance($user->id),
+            'balance'                  => (new General)->balance($user->id),
             'last_login'               => $user->last_login_at,
             'last_seen'                => $last_seen,
             'ip_address'               => $user->last_login_ip,
@@ -802,7 +804,7 @@ class General
             'gender'                   => $user->gender,
             'sms_id'                   => $user->guest_id,
             'student_id'               => $student_id,
-            'balance'                  => $user->balance($user->id),
+            'balance'                  => (new General)->balance($user->id),
             'last_login'               => $lastLogin,
             'last_seen'                => $last_seen,
             'ip_address'               => $user->last_login_ip,
@@ -937,7 +939,7 @@ class General
             'gender'                   => $user->gender,
             'sms_id'                   => $user->guest_id,
             'student_id'               => $student_id,
-            'balance'                  => $user->balance($user->id),
+            'balance'                  => (new General)->balance($user->id),
             'last_login'               => $lastLogin,
             'last_seen'                => $last_seen,
             'ip_address'               => $user->last_login_ip,
@@ -1056,8 +1058,8 @@ class General
             'gender'                   => $user->gender,
             'sms_id'                   => $user->guest_id,
             'student_id'               => $student_id,
-            'balance'                  => $user->balance($user->id),
-            'balanceReadable'          => env('BILLING_CURRENCY') . ' ' . number_format($user->balance($user->id)),
+            'balance'                  => (new General)->balance($user->id),
+            'balanceReadable'          => env('BILLING_CURRENCY') . ' ' . number_format((new General)->balance($user->id)),
         ];
     }
 
@@ -1096,7 +1098,7 @@ class General
 
             $apCode              = $academicPeriod->code;
             $academicProgression = General::getAcademicPaymentProgress($user->id, $apID);
-            $percent             = round(Accounting::AcademicPaymentPercentage($user->id, $apID));
+            $percent             = round(self::AcademicPaymentPercentage($user->id, $apID));
             $userPaymentPlan     = UserPaymentPlan::where('userID', $userID)->get()->last();
 
             if ($userPaymentPlan) {
@@ -1128,7 +1130,7 @@ class General
             'gender'                   => $user->gender,
             'sms_id'                   => $user->guest_id,
             'student_id'               => $student_id,
-            'balance'                  => $user->balance($user->id),
+            'balance'                  => (new General)->balance($user->id),
             'percent'                  => $percent,
             'academicProgression'      => $academicProgression,
             'academicPeriodStatus'     => $status,
@@ -1137,7 +1139,7 @@ class General
             'suspended'                => $suspended,
             'canAttendClass'           => $canAttendClass,
             'userPaymentPlanData'      => $userPaymentPlanData,
-            'balanceReadable'          => env('BILLING_CURRENCY') . ' ' . number_format($user->balance($user->id)),
+            'balanceReadable'          => env('BILLING_CURRENCY') . ' ' . number_format((new General)->balance($user->id)),
         ];
     }
 

@@ -60,6 +60,7 @@ use Laravel\Sanctum\HasApiTokens;
  * @property int $preActivated
  * @property int|null $force_password_reset
  * @property string $admissionStatus
+ * @property string $user_type
  * @property-read \Illuminate\Notifications\DatabaseNotificationCollection<int, \Illuminate\Notifications\DatabaseNotification> $notifications
  * @property-read int|null $notifications_count
  * @property-read \Illuminate\Database\Eloquent\Collection<int, \Laravel\Sanctum\PersonalAccessToken> $tokens
@@ -249,7 +250,7 @@ class User extends Authenticatable
         return $this->hasOne(EducationalInfo::class);
     }
 
-    public function sponser()
+    public function sponsor()
     {
         return $this->hasOne(UserSponser::class);
     }

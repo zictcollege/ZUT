@@ -26,6 +26,10 @@ class Enrollment extends Model
         return $this->hasOne(Academics\ClassAssessment::class,'classID','classID');
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'userID', 'id');
+    }
     public static function data($id) // UserProgramID
     {
         $userProgram    = Admissions\UserProgram::find($id);

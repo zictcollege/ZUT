@@ -47,7 +47,7 @@ class UserRepo {
 
     public function find($id)
     {
-        return User::with('nextofKin','personalinfo')->find($id);
+        return User::with('nextofKin','personalinfo','sponsor')->find($id);
     }
 
     public function getAll()

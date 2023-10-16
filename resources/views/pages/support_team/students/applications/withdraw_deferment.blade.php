@@ -13,8 +13,10 @@
 
         <div class="card-body">
             <ul class="nav nav-tabs nav-tabs-highlight">
-                <li class="nav-item"><a href="#my-applied-programs" class="nav-link active" data-toggle="tab">Manage my Applications</a></li>
-                <li class="nav-item"><a href="#new-class" class="nav-link" data-toggle="tab"><i class="icon-plus2"></i> Create New Applications</a></li>
+                <li class="nav-item"><a href="#my-applied-programs" class="nav-link active" data-toggle="tab">Manage my
+                        Applications</a></li>
+                <li class="nav-item"><a href="#new-class" class="nav-link" data-toggle="tab"><i class="icon-plus2"></i>
+                        Create New Applications</a></li>
             </ul>
 
             <div class="tab-content">
@@ -27,7 +29,9 @@
                                 <span>You can apply to change your program of study by clicking on the “Create New Application” button on your top right.
                                     In order for your application to be valid, you need to meet the following conditions:</span>
                                 <ol>
-                                    <li>Application can only be valid two weeks after the end of the sets registration date of the current academic period.</li>
+                                    <li>Application can only be valid two weeks after the end of the sets registration
+                                        date of the current academic period.
+                                    </li>
                                     <li>Application will only be approved if a reason provided is valid.</li>
                                 </ol>
                             </div>
@@ -75,49 +79,35 @@
                 <div class="tab-pane fade" id="new-class">
                     <div class="row">
                         <div class="col-md-6">
+                            <p>This is a request from a student to withdraw from the current registered academic period
+                                (semester/year) and report in the future academic period etc. Common reasons include
+                                pregnancy, travelling abroad, job transfer, won't manage to write final exam, illness,
+                                lack of funds etc</p>
                             <form class="ajax-store" method="post" action="{{ route('change_program_apply')  }}">
                                 @csrf
                                 <div class="form-group row">
-                                    <label class="col-lg-3 col-form-label font-weight-semibold">Select Qualification <span class="text-danger">*</span></label>
+                                    <label class="col-lg-3 col-form-label font-weight-semibold">Application Type
+                                        <span class="text-danger">*</span></label>
                                     <div class="col-lg-9">
-                                        <select required data-placeholder="Select Course" class="form-control select-search" name="qualification" id="courses">
+                                        <select required data-placeholder="Select Course"
+                                                class="form-control select-search" name="qualification" id="courses">
                                             <option value=""></option>
-                                            {{--                                            @foreach($period['instructors'] as $u)--}}
-                                            {{--                                                <option value="{{ $u->id }}">{{ $u->first_name.' '.$u->last_name }}</option>--}}
-                                            {{--                                            @endforeach--}}
+                                            <option value="Withdrawal">Withdrawal</option>
+                                            <option value="Deferment">Deferment</option>
                                         </select>
                                     </div>
                                 </div>
                                 <div class="form-group row">
-                                    <label class="col-lg-3 col-form-label font-weight-semibold">Prefered Program of Choice<span class="text-danger">*</span></label>
+                                    <label class="col-lg-3 col-form-label font-weight-semibold">Reason for Application<span class="text-danger">*</span></label>
                                     <div class="col-lg-9">
-                                        <select required data-placeholder="Select Course" class="form-control select-search" name="qualification" id="courses">
+                                        <select required data-placeholder="Select Course"
+                                                class="form-control select-search" name="qualification" id="courses">
                                             <option value=""></option>
-                                            {{--                                            @foreach($period['instructors'] as $u)--}}
-                                            {{--                                                <option value="{{ $u->id }}">{{ $u->first_name.' '.$u->last_name }}</option>--}}
-                                            {{--                                            @endforeach--}}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group row">
-                                    <label class="col-lg-3 col-form-label font-weight-semibold">Study Mode <span class="text-danger">*</span></label>
-                                    <div class="col-lg-9">
-                                        <select required data-placeholder="Select Course" class="form-control select-search" name="qualification" id="courses">
-                                            <option value=""></option>
-                                            {{--                                            @foreach($period['instructors'] as $u)--}}
-                                            {{--                                                <option value="{{ $u->id }}">{{ $u->first_name.' '.$u->last_name }}</option>--}}
-                                            {{--                                            @endforeach--}}
-                                        </select>
-                                    </div>
-                                </div>
-                                <div class="form-group row">
-                                    <label class="col-lg-3 col-form-label font-weight-semibold">Reason for change<span class="text-danger">*</span></label>
-                                    <div class="col-lg-9">
-                                        <select required data-placeholder="Select Course" class="form-control select-search" name="qualification" id="courses">
-                                            <option value=""></option>
-                                            {{--                                            @foreach($period['instructors'] as $u)--}}
-                                            {{--                                                <option value="{{ $u->id }}">{{ $u->first_name.' '.$u->last_name }}</option>--}}
-                                            {{--                                            @endforeach--}}
+                                            <option value="Travelling">Travelling</option>
+                                            <option value="Sick">Sick</option>
+                                            <option value="Found Employment">Found Employment</option>
+                                            <option value="Lack of Funds">Lack of Funds</option>
+                                            <option value="Other">Other</option></select>
                                         </select>
                                     </div>
                                 </div>
@@ -129,7 +119,8 @@
                                 </div>
 
                                 <div class="text-right">
-                                    <button id="ajax-btn" type="submit" class="btn btn-primary">Submit form <i class="icon-paperplane ml-2"></i></button>
+                                    <button id="ajax-btn" type="submit" class="btn btn-primary">Submit form <i
+                                                class="icon-paperplane ml-2"></i></button>
                                 </div>
                             </form>
                         </div>

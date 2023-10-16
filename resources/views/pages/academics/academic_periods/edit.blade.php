@@ -12,7 +12,7 @@
 
         <div class="card-body">
             <div class="col-md-8">
-                <form class="ajax-update" method="post" action="{{ route('acupdate', $period->id) }}">
+                <form class="ajax-update" method="post" action="{{ route('acupdate', Qs::hash($period->id) ) }}">
                     @csrf @method('PUT')
                     <div class="form-group row">
                         <label class="col-lg-3 col-form-label font-weight-semibold">Code <span class="text-danger">*</span></label>

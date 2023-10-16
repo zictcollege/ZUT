@@ -3,6 +3,7 @@
 namespace App\Repositories;
 
 use App\Models\Academics\ClassAssessment;
+use App\Models\Results\ImportList;
 
 class ClassAssessmentsRepo
 {
@@ -24,6 +25,14 @@ class ClassAssessmentsRepo
     public function update($id, $data)
     {
         return ClassAssessment::find($id)->update($data);
+    }
+    public function addResults($data)
+    {
+        return ImportList::create($data);;
+    }
+    public function updateImportlistResults($id, $data)
+    {
+        return ImportList::find($id)->update($data);
     }
 
     public function find($id)

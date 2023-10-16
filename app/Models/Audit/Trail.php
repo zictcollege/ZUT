@@ -1,9 +1,8 @@
 <?php
 namespace App\Models\Audit;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
-use App\Models\Academic\Program;
-use App\User;
 
 class Trail extends Model
 {

@@ -23,8 +23,9 @@ class ClassAssessments extends FormRequest
     {
         return [
             'assesmentID' => 'required|integer|exists:ac_assessmentTypes,id',
-            'classID' => 'required|integer|exists:ac_courses,id',
+            'classID' => 'required|integer|exists:ac_classes,id',
             'total' => 'required|integer',
+            'end_date' =>'required|string|date'
         ];
     }
 }

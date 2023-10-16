@@ -3,6 +3,7 @@
 namespace App\Models\Academics;
 
 use App\Models\Admissions\UserProgram;
+use App\Models\Enrollment;
 use App\Models\User;
 use App\Support\Finance\Accounting\Accounting;
 use App\Support\General;
@@ -34,11 +35,15 @@ class Classes extends Model
     }
     public function assessments()
     {
-        return $this->hasMany(ClassAssessment::class, 'id');
+        return $this->hasMany(ClassAssessment::class, 'classID','id');
     }
     public function instructor()
     {
         return $this->belongsTo(User::class, 'instructorID', 'id');
+    }
+    public function enrollments()
+    {
+        return $this->hasMany(Enrollment::class, 'classID','id');
     }
     public function academics()
     {
@@ -104,10 +109,10 @@ class Classes extends Model
             $balance     = Accounting::user_balance($user_id);
 
 
-            if ($balance > 0 && $currentAPID == $class->academicPeriodID) {
-
-                 $grade = 'Results Held';
-            }
+//            if ($balance > 0 && $currentAPID == $class->academicPeriodID) {
+//
+//                 $grade = 'Results Held';
+//            }
 
             $prerequisiteCode =[];
 
@@ -457,11 +462,14 @@ class Classes extends Model
 
                     if ($student['currentProgramID'] == $up) {
                         $identifiedStudents[] = $student;
-                        if ($student['paymentPlanData']['canAttendClass'] == 1) {
-                            $canAttendClass[] = $student;
-                        }else {
-                            $canNotAttendClass[] = $student;
+                        if (!empty($student['paymentPlanData'])){
+                            if ($student['paymentPlanData']['canAttendClass'] == 1) {
+                                $canAttendClass[] = $student;
+                            }else {
+                                $canNotAttendClass[] = $student;
+                            }
                         }
+
                     }
 
                 }

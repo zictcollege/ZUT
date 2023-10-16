@@ -8,8 +8,13 @@ use App\Http\Middleware\Custom\SuperAdmin;
 use App\Http\Middleware\Custom\TeamSA;
 use App\Http\Requests\AcademicPeriod\AcademicPeriodCreate;
 use App\Http\Requests\AcademicPeriod\AcademicPeriodUpdate;
+use App\Http\Requests\Classes\Classes;
 use App\Http\Requests\Fees\Fees;
 use App\Http\Requests\PeriodFees\PeriodFees;
+use App\Http\Requests\Programs\Program;
+use App\Models\Academics\CourseLevels;
+use App\Models\Academics\Programs;
+use App\Models\Admissions\ProgramCourses;
 use App\Repositories\Academicperiods;
 use App\Repositories\Classesrepo;
 use App\Repositories\CoursesRepo;
@@ -17,6 +22,7 @@ use App\Repositories\FeesRepo;
 use App\Repositories\PeriodFeesRepo;
 use App\Repositories\PeriodTypeRepo;
 use App\Repositories\StudyModeRepo;
+use App\Support\ClassEnrollment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -186,8 +192,8 @@ class AcademicPeriodsController extends Controller
             ];
         }
 
-        //dd($output);
-        return !is_null($academic ) ? view('pages.academics.academic_periods.show', compact('period','output'))
+
+        return !is_null($academic ) ? view('pages.academics.academic_periods.show', compact('period','ap'))
             : Qs::goWithDanger('pages.academics.academic_periods.index');
     }
 
@@ -277,5 +283,100 @@ class AcademicPeriodsController extends Controller
         $id = Qs::decodeHash($id);
         $this->academic->find($id)->delete();
         return back()->with('flash_success', __('msg.delete_ok'));
+    }
+    public function viewEnrolledStudentsData($academicPeriodID, $programID)
+    {
+        $classes              = [];
+
+        $studentsUnPaid       = [];
+        $knownCourseIDS       = [];
+        $knownProgramCourses  = [];
+        $studentsCount        = 0;
+        $totalStudents        = 0;
+        $students             = ClassEnrollment::viewFullProgramEnrollmentsByProgramID($programID, $academicPeriodID);
+        $program              = Programs::dataMini($programID);
+
+
+
+        foreach ($students as $student) {
+            $progressionYears[] = $student['progression']['currentLevelName'];
+        }
+
+        if (!empty($progressionYears)) {
+            $progressionYearsUnique = array_unique($progressionYears);
+            sort($progressionYearsUnique);
+
+            foreach ($progressionYearsUnique as $py) {
+
+                foreach ($students as $thisStudent) {
+                    if ($py == $thisStudent['progression']['currentLevelName']) {
+                        $levelStudents[] = $thisStudent;
+                    }
+                }
+                // find classes runing on this level
+                $courseLevel         = CourseLevels::where('name', $py)->get()->first();
+
+                if (!empty($courseLevel)) {
+                    $knownProgramCourses = ProgramCourses::where('level_id', $courseLevel->id)->where('programID', $programID)->get();
+                }
+
+                // check for these classes created and running in the provided academic period
+                $knownCourseIDS = [];
+                foreach ($knownProgramCourses as $knownProgramCourse) {
+                    $knownCourseIDS[] = $knownProgramCourse->courseID;
+                }
+
+                if ($knownCourseIDS) {
+                    // check for the created classes under the provided academic period
+                    $acClasses  =  \App\Models\Academics\Classes::whereIn('courseID', $knownCourseIDS)->where('academicPeriodID', $academicPeriodID)->get();
+                    if ($acClasses) {
+                        foreach ($acClasses as $acClass) {
+                            $classes[] = \App\Models\Academics\Classes::dataMiniByProgram($acClass->id, 0, null, $programID);
+                        }
+                        $totalStudents  = count($levelStudents);
+                    }
+
+                    $studentsPaid         = [];
+                    $studentsUnPaid       = [];
+                    if ($levelStudents) {
+                        foreach ($levelStudents as $levelStudent) {
+                            if ($levelStudent['paymentPlanData'] && $levelStudent['paymentPlanData']['canAttendClass'] == 1) {
+                                $studentsPaid[] = $levelStudent;
+                            } else {
+                                $studentsUnPaid[] = $levelStudent;
+                            }
+                        }
+                    }
+                    $classes = [];
+                    $levels[] = [
+                        'name'            => $py,
+                        'students'        => $levelStudents,
+                        'studentsPaid'    => $studentsPaid,
+                        'studentsUnPaid'  => $studentsUnPaid,
+                        'classes'         => $classes,
+                        'total'           => $totalStudents,
+                    ];
+
+                    $classes = [];
+                    $acClass = [];
+                    unset($studentsPaid, $studentsUnPaid,$levelStudents);
+                    unset($classes, $acClasses, $totalStudents);
+                }
+            }
+            unset($levelStudents, $classes, $acClasses, $knownCourseIDS);
+        }
+
+        $studentsCount = count($students);
+
+
+        $data = [
+            'progressionYears'  => $progressionYearsUnique,
+            'program'           => $program,
+            'levels'            => $levels,
+            'studentsCount'     => $studentsCount,
+            'students'          => $students,
+        ];
+
+        return $data;
     }
 }

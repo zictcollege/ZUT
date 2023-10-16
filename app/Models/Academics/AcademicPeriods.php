@@ -2,9 +2,8 @@
 
 namespace App\Models\Academics;
 
-use App\Http\Requests\ProgramCourses\ProgramCourse;
-use App\Models\Accounting\Fee;
 use App\Models\Admissions\ProgramCourses;
+use App\Models\Accounting\Fee;
 use App\Models\Admissions\UserProgram;
 use App\Models\Admissions\UserStudyModes;
 use App\Models\Enrollment;
@@ -50,7 +49,7 @@ class AcademicPeriods extends Model
     }
     public function classes()
     {
-        return $this->hasMany(Classes::class, 'academicPeriodID');
+        return $this->hasMany(Classes::class, 'academicPeriodID','id');
     }
 
     public function Periodfees()
@@ -458,7 +457,7 @@ class AcademicPeriods extends Model
             foreach ($enrollments as $enrollment) {
                 $classIDs[] = $enrollment->classID;
             }
-            $studentsClasses = AcClass::wherein('id', $classIDs)->where('academicPeriodID', '!=', $id)->get()->unique('academicPeriodID');
+            $studentsClasses = Classes::wherein('id', $classIDs)->where('academicPeriodID', '!=', $id)->get()->unique('academicPeriodID');
 
             foreach ($studentsClasses as $sClass) {
                 if ($sClass->academicPeriodID > $id) {
@@ -482,7 +481,7 @@ class AcademicPeriods extends Model
             }
 
 
-            $classes  = AcademicPeriod::myclasses($user_id, $ap->id,0);
+            $classes  = AcademicPeriods::myclasses($user_id, $ap->id,0);
 
 
 
@@ -701,11 +700,11 @@ class AcademicPeriods extends Model
 
                 if (!empty($resultsStatus)) {
                     # Get custom classes
-                    $programCourses = ProgramCourse::where('programID', $userProgram->programID)->where('level_id', $resultsStatus)->where('active', 1)->get();
+                    $programCourses = ProgramCourses::where('programID', $userProgram->programID)->where('level_id', $resultsStatus)->where('active', 1)->get();
                 } else {
 
                     if (!empty($programCourse)) {
-                        $programCourses = ProgramCourse::where('programID', $userProgram->programID)->where('level_id', $programCourse->level_id + 1)->get();
+                        $programCourses = ProgramCourses::where('programID', $userProgram->programID)->where('level_id', $programCourse->level_id + 1)->get();
                     } else {
                         $programCourses = [];
                     }
@@ -745,18 +744,18 @@ class AcademicPeriods extends Model
                             $courseIDs[] = $pEnrollment->class->course->id;
                         }
                     }
-                    $programCourses = ProgramCourse::where('programID', $programCourse->programID)->whereNotIn('courseID', $courseIDs)->where('level_id', $programCourse->level_id)->get();
+                    $programCourses = ProgramCourses::where('programID', $programCourse->programID)->whereNotIn('courseID', $courseIDs)->where('level_id', $programCourse->level_id)->get();
                     //  $programCourses = ProgramCourse::where('programID', $programCourse->programID)->where('level_id', $programCourse->level_id + 1)->where('active', 1)->get();
                 } else {
 
                     $resultsStatus = [];
                     if (!empty($resultsStatus)) {
                         # Get custom classes
-                        $programCourses = ProgramCourse::where('programID', $userProgram->programID)->where('level_id', $resultsStatus)->where('active', 1)->get();
+                        $programCourses = ProgramCourses::where('programID', $userProgram->programID)->where('level_id', $resultsStatus)->where('active', 1)->get();
                     } else {
 
                         if (!empty($programCourse)) {
-                            $programCourses = ProgramCourse::where('programID', $userProgram->programID)->where('level_id', $programCourse->level_id + 1)->where('active', 1)->get();
+                            $programCourses = ProgramCourses::where('programID', $userProgram->programID)->where('level_id', $programCourse->level_id + 1)->where('active', 1)->get();
                         } else {
                             $programCourses = [];
                         }
@@ -798,7 +797,7 @@ class AcademicPeriods extends Model
 
         $userProgram    = UserProgram::where('userID', $user_id)->get()->last();
 
-        $programCourse  = ProgramCourse::where('programID', $userProgram->programID)->where('courseID', $class->courseID)->get()->first();
+        $programCourse  = ProgramCourses::where('programID', $userProgram->programID)->where('courseID', $class->courseID)->get()->first();
 
 
         # Get previous academic period to find all courses that have been done.
@@ -822,7 +821,7 @@ class AcademicPeriods extends Model
             // $programCourses = ProgramCourse::where('programID', $programCourse->programID)->whereNotIn('courseID', $courseIDs)->where('level_id', $programCourse->level_id)->get();
 
             if (empty($programCourses)) {
-                $programCourses = ProgramCourse::where('programID', $programCourse->programID)->where('level_id', $programCourse->level_id + 1)->where('active', 1)->get();
+                $programCourses = ProgramCourses::where('programID', $programCourse->programID)->where('level_id', $programCourse->level_id + 1)->where('active', 1)->get();
             }
         } else {
 
@@ -832,11 +831,11 @@ class AcademicPeriods extends Model
 
             if (!empty($resultsStatus)) {
                 # Get custom classes
-                $programCourses = ProgramCourse::where('programID', $userProgram->programID)->where('level_id', $resultsStatus)->where('active', 1)->get();
+                $programCourses = ProgramCourses::where('programID', $userProgram->programID)->where('level_id', $resultsStatus)->where('active', 1)->get();
             } else {
 
                 if (!empty($programCourse)) {
-                    $programCourses = ProgramCourse::where('programID', $userProgram->programID)->where('level_id', $programCourse->level_id + 1)->where('active', 1)->get();
+                    $programCourses = ProgramCourses::where('programID', $userProgram->programID)->where('level_id', $programCourse->level_id + 1)->where('active', 1)->get();
                 } else {
                     $programCourses = [];
                 }
@@ -880,7 +879,7 @@ class AcademicPeriods extends Model
 
 
 
-                $programCourses = ProgramCourse::where('programID', $programCourse->programID)->where('level_id', $programCourse->level_id + 1)->where('active', 1)->get();
+                $programCourses = ProgramCourses::where('programID', $programCourse->programID)->where('level_id', $programCourse->level_id + 1)->where('active', 1)->get();
             } else {
 
 
@@ -889,11 +888,11 @@ class AcademicPeriods extends Model
 
                 if (!empty($resultsStatus)) {
                     # Get custom classes
-                    $programCourses = ProgramCourse::where('programID', $userProgram->programID)->where('level_id', $resultsStatus)->where('active', 1)->get();
+                    $programCourses = ProgramCourses::where('programID', $userProgram->programID)->where('level_id', $resultsStatus)->where('active', 1)->get();
                 } else {
 
                     if (!empty($programCourse)) {
-                        $programCourses = ProgramCourse::where('programID', $userProgram->programID)->where('level_id', $programCourse->level_id + 1)->where('active', 1)->get();
+                        $programCourses = ProgramCourses::where('programID', $userProgram->programID)->where('level_id', $programCourse->level_id + 1)->where('active', 1)->get();
                     } else {
                         $programCourses = [];
                     }
@@ -975,7 +974,7 @@ class AcademicPeriods extends Model
                     $course_ids[] = $apClass->courseID;
                 }
 
-                $courses         = ProgramCourse::whereIn('courseID', $course_ids)->get()->unique('programID');
+                $courses         = ProgramCourses::whereIn('courseID', $course_ids)->get()->unique('programID');
                 foreach ($courses as $course) {
                     $program     = Classes::data($course->programID, $ap->id);
                     $programs[]  = $program;

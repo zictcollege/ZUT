@@ -28,6 +28,7 @@ use App\Models\Applications\StudentAdmissionRequest;
 use App\Models\Applications\WithDrawDeferment;
 use App\Models\Enrollment;
 use App\Models\ExamRegistraion;
+use App\Models\Results\ImportList;
 use App\Models\User;
 use App\Support\Exemption;
 use App\Support\Progression;
@@ -585,7 +586,7 @@ use Invoicing;
                 $mode               = UserStudyModes::where('userID', $user->id)->get()->last();
 
                 if (!empty($mode)) {
-                    $currentMode        = StudyMode::where('id', $mode->studyModeID)->get()->first();
+                    $currentMode        = StudyModes::where('id', $mode->studyModeID)->get()->first();
                     $currentModeName    = $currentMode->name;
                 } else {
 
@@ -634,7 +635,7 @@ use Invoicing;
         $percent             = round(self::AcademicPaymentPercentage($user->id, $apID));
 
         # Exemptions
-        $exemption = Exemption::where('userID', $user->id)->get();
+        $exemption = \App\Models\Exemption::where('userID', $user->id)->get();
 
         if (!empty($exemption)) {
             # code...
@@ -1558,7 +1559,11 @@ use Invoicing;
         $user->save();
     }
 
-
+    public static function getUserProgramID($userID)
+    {
+        $program = UserProgram::where('userID','=',$userID)->get()->first();
+    return $program->programID;
+    }
     public static function getAcademicPaymentProgress($userID, $AcademicPeriodID)
     {
 
@@ -1795,10 +1800,12 @@ use Invoicing;
         } else {
             $levels = [];
             $currentLevelName = '';
+            $lastLevelID = '';
         }
 
         return [
             'currentLevelName'  => $currentLevelName,
+            'currentLevelId'  => $lastLevelID,
             'lastLevelArray'  => array_pop($levels),
             'levels'          => $levels,
             'programCourses'  => $programCourses,

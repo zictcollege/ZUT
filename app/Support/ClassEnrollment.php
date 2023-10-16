@@ -10,10 +10,10 @@ use App\Models\Admissions\UserProgram;
 use App\Models\Enrollment;
 use App\Models\User;
 use Carbon\Carbon;
-
+use App\Traits\User\General as useri;
 class ClassEnrollment
 {
-
+use useri;
     public static function enroll($user_id, $academic_period_id, $courses)
     {
 
@@ -84,7 +84,7 @@ class ClassEnrollment
 
             foreach ($userPrograms as $userProgram) {
 
-                $users[] = User::jsondataMini($userProgram->userID);
+                $users[] = self::jsondataMini($userProgram->userID);
             }
 
             if (empty($users)) {
@@ -118,7 +118,7 @@ class ClassEnrollment
         if (!empty($userIDs)) {
             $userPrograms = UserProgram::whereIn('userID', $userIDs)->where('programID', $programID)->get();
             foreach ($userPrograms as $userProgram) {
-                $users[] = User::jsondataMini($userProgram->userID);
+                $users[] = self::jsondataMini($userProgram->userID);
             }
 
             if (empty($users)) {

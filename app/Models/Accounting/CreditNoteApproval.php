@@ -1,7 +1,8 @@
 <?php
 
-namespace App;
+namespace App\Models\Accounting;
 
+use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 
 class CreditNoteApproval extends Model

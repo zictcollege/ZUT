@@ -1,102 +1,183 @@
 @extends('layouts.master')
-@section('page_title', 'User Profile - '.$user->name)
+@section('page_title', 'Upload results')
 @section('content')
     @php
         use App\Helpers\Qs;
     @endphp
-    <div class="row">
-        <div class="col-md-3 text-center">
-            <div class="card">
-                <div class="card-body">
-                    <img style="width: 90%; height:90%" src="{{ $user->photo }}" alt="photo" class="rounded-circle">
-                    <br>
-                    <h3 class="mt-3">{{ $user->first_name.' '.$user->middle_name.' '.$user->last_name }}</h3>
-                </div>
-            </div>
+    <div class="card">
+        <div class="card-header header-elements-inline">
+            <h6 class="card-title">Class Assessment And Exam Manager</h6>
+            {!! Qs::getPanelOptions() !!}
         </div>
-        <div class="col-md-9">
-            <div class="card">
-                <div class="card-body">
-                    <ul class="nav nav-tabs nav-tabs-highlight">
-                        <li class="nav-item">
-                            <a href="#" class="nav-link active" >{{ $user->first_name.' '.$user->middle_name.' '.$user->last_name }}</a>
-                        </li>
-                    </ul>
 
-                    <div class="tab-content">
-                        {{--Basic Info--}}
-                        <div class="tab-pane fade show active" id="basic-info">
-                            <table class="table table-bordered">
-                                <tbody>
-                                <tr>
-                                    <td class="font-weight-bold">Name</td>
-                                    <td>{{ $user->first_name.' '.$user->middle_name.' '.$user->last_name }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="font-weight-bold">Gender</td>
-                                    <td>{{ $user->gender }}</td>
-                                </tr>
-                                <tr>
-                                    <td class="font-weight-bold">Address</td>
-                                    <td>{{ $user->address }}</td>
-                                </tr>
-                                @if($user->email)
-                                    <tr>
-                                        <td class="font-weight-bold">Email</td>
-                                        <td>{{$user->email }}</td>
-                                    </tr>
-                                @endif
-                                @if($user->username)
-                                    <tr>
-                                        <td class="font-weight-bold">Username</td>
-                                        <td>{{$user->username }}</td>
-                                    </tr>
-                                @endif
-                                @if($user->phone)
-                                    <tr>
-                                        <td class="font-weight-bold">Phone</td>
-                                        <td>{{$user->phone.' '.$user->phone2 }}</td>
-                                    </tr>
-                                @endif
-                                <tr>
-                                    <td class="font-weight-bold">Birthday</td>
-                                    <td>{{$user->dob }}</td>
-                                </tr>
-                                @if($user->nal_id)
-                                    <tr>
-                                        <td class="font-weight-bold">Nationality</td>
-                                        <td>{{$user->nationality->name }}</td>
-                                    </tr>
-                                @endif
-                                @if($user->state_id)
-                                    <tr>
-                                        <td class="font-weight-bold">NRC</td>
-                                        <td>{{$user->NRC}}</td>
-                                    </tr>
-                                @endif
+        <div class="card-body">
+            <ul class="nav nav-tabs nav-tabs-highlight">
+                <li class="nav-item">
+                    <a href="#Upload-results" class="nav-link active" data-toggle="tab">Upload Results</a>
+                </li>
+                <li class="nav-item">
+                    <a href="#Add-results" class="nav-link" data-toggle="tab">Add Results</a>
+                </li>
+            </ul>
+            <div class="tab-content">
+                <div class="tab-pane fade show active" id="Upload-results">
+                    <div class="row">
+                        <div class="col-md-12">
+                            <div class="card">
+                                <div class="card-header">
+                                    Import CSV or Excel File
+                                </div>
+                                <div class="card-body">
+                                    @if(session('success'))
+                                        <div class="alert alert-success">
+                                            {{ session('success') }}
+                                        </div>
+                                    @endif
 
-                                @if($user->user_type == 'teacher')
-                                    <tr>
-                                        <td class="font-weight-bold">My Subjects</td>
-                                        <td>
-                                            @foreach(Qs::findTeacherSubjects($user->id) as $sub)
-                                                <span> - {{ $sub->name.' ('.$sub->my_class->name.')' }}</span><br>
+                                    @if(empty($data))
+                                        <!-- Import Form -->
+                                        <form method="POST" action="{{ route('import.process') }}"
+                                              enctype="multipart/form-data">
+                                            @csrf
+                                            <div class="form-group row">
+                                                <input type="hidden" name="instructor" value=""
+                                                       required>
+                                                <label class="col-lg-3 col-form-label font-weight-semibold"
+                                                       for="nal_id">Academic Period: <span class="text-danger">*</span></label>
+                                                <div class="col-lg-9">
+                                                    <select onchange="getRunningPrograms(this.value)"
+                                                            data-placeholder="Choose..." name="academic" required
+                                                            id="nal_id" class="select-search form-control">
+                                                        <option value="">Choose</option>
+                                                        @foreach($open as $ac)
+                                                            <option {{ (old('nal_id') == $ac->id ? 'selected' : '') }} value="{{ Qs::hash($ac->id) }}">{{ $ac->code }}</option>
+                                                        @endforeach
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="classID"
+                                                       class="col-lg-3 col-form-label font-weight-semibold">Class: <span
+                                                            class="text-danger">*</span></label>
+                                                <div class="col-lg-9">
+                                                    <select data-placeholder="Choose..." required name="programID"
+                                                            id="programID" class=" select-search form-control programID">
+                                                        <option value="">Choose</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div class="form-group row">
+                                                <label for="classID"
+                                                       class="col-lg-3 col-form-label font-weight-semibold">Choose File
+                                                    <span class="text-danger">*</span></label>
+                                                <div class="col-lg-9">
+                                                    <input type="file" class="form-control-file" id="file" name="file"
+                                                           required>
+                                                </div>
+                                            </div>
+                                            <button type="submit" class="btn btn-primary">Upload and Preview</button>
+                                        </form>
+                                    @else
+                                        <!-- Data Preview Table -->
+                                        <h2>Results Preview</h2>
+                                        <table class="table table-bordered table-hover datatable-button-html5-columns">
+                                            <thead>
+                                            <tr>
+{{--                                                @foreach($data[0] as $column => $value)--}}
+{{--                                                    <th>{{ $column }}</th>--}}
+{{--                                                @endforeach--}}
+                                                <th> SIN </th>
+                                                <th> CODE </th>
+                                                <th> COURSE </th>
+                                                <th> MARK </th>
+                                                <th> ACADEMIC PERIOD </th>
+                                                <th> PROGRAM </th>
+                                            </tr>
+                                            </thead>
+                                            <tbody>
+                                            @foreach($data as $row)
+                                                <tr>
+                                                    @foreach($row as $value)
+                                                        <td>{{ $value }}</td>
+                                                    @endforeach
+                                                </tr>
                                             @endforeach
-                                        </td>
-                                    </tr>
-                                @endif
+                                            </tbody>
+                                        </table>
 
-                                </tbody>
-                            </table>
+                                        <!-- Import Button -->
+                                        <div class="row col mb-4 mt-3">
+                                            <form method="POST" action="{{ route('import.process') }}"
+                                                  enctype="multipart/form-data">
+                                                @csrf
+                                                <div class="form-group">
+                                                    <input type="file" class="form-control-file" id="file" name="file"
+                                                           required>
+                                                </div>
+                                                <button type="submit" class="btn btn-primary">Import Data</button>
+                                            </form>
+                                        </div>
+                                    @endif
+                                </div>
+                            </div>
                         </div>
-
+                    </div>
+                </div>
+                <div class="tab-pane fade show" id="Add-results">
+                    <div class="row">
+                        <div class="col-md-12">
+                            @if(empty($data))
+                            <form method="POST" action="{{ route('postedResults.process') }}"
+                                  enctype="multipart/form-data">
+                                @csrf
+                                <div class="form-group row">
+                                    <label class="col-lg-3 col-form-label font-weight-semibold"
+                                           for="nal_id">Academic Period: <span class="text-danger">*</span></label>
+                                    <div class="col-lg-9">
+                                        <select onchange="getRunningPrograms(this.value)"
+                                                data-placeholder="Choose..." name="academic" required class="select-search form-control">
+                                            <option value="">Choose</option>
+                                            @foreach($open as $ac)
+                                                <option {{ (old('nal_id') == $ac->id ? 'selected' : '') }} value="{{ Qs::hash($ac->id) }}">{{ $ac->code }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="classID"
+                                           class="col-lg-3 col-form-label font-weight-semibold">Program: <span
+                                                class="text-danger">*</span></label>
+                                    <div class="col-lg-9">
+                                        <select data-placeholder="Choose..." required name="programID"
+                                                id="programID" class=" select-search form-control programID">
+                                            <option value="">Choose</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="classID" class="col-lg-3 col-form-label font-weight-semibold">Student Number <span class="text-danger">*</span></label>
+                                    <div class="col-lg-9">
+                                        <input required class="form-control" placeholder="Student Number" name="studentnumber" type="text">
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    <label for="classID"
+                                           class="col-lg-3 col-form-label font-weight-semibold">Marks <span
+                                                class="text-danger">*</span></label>
+                                    <div class="col-lg-9">
+                                        <input required class="form-control" placeholder="Marks" name="mark" type="text">
+                                    </div>
+                                </div>
+                                <button type="submit" class="btn btn-primary">Upload Results</button>
+                            </form>
+                            @else
+                                <p>Upload the results</p>
+                            @endif
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
-
-    {{--User Profile Ends--}}
 
 @endsection
