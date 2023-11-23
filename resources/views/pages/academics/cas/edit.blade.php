@@ -1,43 +1,83 @@
 @extends('layouts.master')
-@section('page_title', 'Edit Course - '.$course->name)
+@section('page_title', 'Publishing Results for '.$period->code)
 @section('content')
     @php
         use App\Helpers\Qs;
     @endphp
     <div class="card">
         <div class="card-header header-elements-inline">
-            <h6 class="card-title">Edit Class</h6>
+            <h6 class="card-title">Publish Results</h6>
             {!! Qs::getPanelOptions() !!}
         </div>
 
         <div class="card-body">
-            <div class="row">
-                <div class="col-md-6">
-                    <form class="ajax-update" data-reload="#page-header" method="post" action="{{ route('courses.update', $course->id) }}">
-                        @csrf @method('PUT')
-                        <div class="form-group row">
-                            <label class="col-lg-3 col-form-label font-weight-semibold">Course Name <span class="text-danger">*</span></label>
-                            <div class="col-lg-9">
-                                <input name="name" value="{{ $course->name }}" required type="text" class="form-control" placeholder="Course Name">
-                            </div>
-                        </div>
+            <table class="table datatable-button-html5-columns">
+                <thead>
+                <tr>
+                    <th>S/N</th>
+                    <th>Program Name</th>
+                    <th>Qualification</th>
+                    <th>Students</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+                </thead>
+                <tbody>
+                @foreach($programs as $program)
+                    <tr>
+                        <td>{{ $loop->iteration }}</td>
+                        <td>{{ $program['name'] }}</td>
+                        <td>{{ $program['qualification'] }}</td>
+                        <td>{{ $program['students'] }}</td>
+                        <td>
+                            {{ ($program['status'] == 0 ? 'unpublished' : 'published') }}
+{{--                            <span class="display-mode" id="display-mode{{ Qs::hash($program->id) }}"></span>--}}
+{{--                            <div class="form-check form-switch">--}}
+{{--                                <input class="form-check-input" type="checkbox" id="flexSwitchCheckChecked">--}}
+{{--                            </div>--}}
+                        </td>
 
-                        <div class="form-group row">
-                            <label class="col-lg-3 col-form-label font-weight-semibold">Code <span class="text-danger">*</span></label>
-                            <div class="col-lg-9">
-                                <input name="code" value="{{ $course->code }}" required type="text" class="form-control" placeholder="Course Code">
-                            </div>
-                        </div>
 
-                        <div class="text-right">
-                            <button type="submit" class="btn btn-primary">Submit form <i class="icon-paperplane ml-2"></i></button>
-                        </div>
-                    </form>
-                </div>
-            </div>
+                        <td class="text-center">
+                            <div class="list-icons">
+                                <div class="dropdown">
+                                    <a href="#" class="list-icons-item" data-toggle="dropdown">
+                                        <i class="icon-menu9"></i>
+                                    </a>
+
+                                    <div class="dropdown-menu dropdown-menu-left">
+
+{{--                                        <a href="{{ route('getPramResults',['aid'=>Qs::hash($apid),'pid'=>Qs::hash($program['id'])]) }}"--}}
+{{--                                           class="dropdown-item">View Results <i class="icon-pencil"></i></a>--}}
+                                        @foreach($program['levels'] as $level)
+                                            <a href="{{ route('getPramResultsLevelCas',['aid'=>Qs::hash($apid),'pid'=>Qs::hash($program['id']),'level'=>Qs::hash($level['level_id'] )]) }}"
+                                               class="dropdown-item">View {{ $level['level_name'] }} Results <i class="icon-pencil"></i></a>
+                                        @endforeach
+
+{{--                                    @if($program['status'] == 0)--}}
+{{--                                            <form class="ajax-store-publish" method="post" action="{{ route('publishProgramResults')  }}">--}}
+{{--                                                @csrf--}}
+
+{{--                                                <input type="hidden" name="programID" value="{{ $program['id'] }}">--}}
+{{--                                                <input type="hidden" name="academicPeriodID" value="{{ $apid }}">--}}
+
+{{--                                                <div class="text-right">--}}
+{{--                                                    <button id="ajax-btn" type="submit" class="dropdown-item">Publish Results <i class="icon-paperplane ml-2"></i></button>--}}
+{{--                                                </div>--}}
+{{--                                            </form>--}}
+{{--                                            <a href="{{ route('publishProgramResults',['aid'=>Qs::hash($apid),'pid'=>Qs::hash($program->id)]) }}"--}}
+{{--                                               class="dropdown-item"><i class="icon-eye"></i> Publish Results</a>--}}
+
+{{--                                    @endif--}}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                @endforeach
+                </tbody>
+            </table>
         </div>
+
     </div>
-
-    {{--Class Edit Ends--}}
-
 @endsection

@@ -631,7 +631,7 @@
         activeTabContent.load(window.location.href + ' ' + activeTabContentId);
     }
 
-    function modifyMarks(studentID, program, academic, code) {
+    function modifyMarks(studentID, program, academic, code,type) {
         console.log(studentID);
         //$('#staticBackdrop').modal('show');
         var modalBody = $('#staticBackdrop .modal-body');
@@ -646,7 +646,8 @@
                 academicPeriodID: academic,
                 programID: program,
                 studentID: studentID,
-                code: code
+                code: code,
+                type:type
             },
             success: function (resp) {
                 // Update the display mode with the new value
@@ -670,9 +671,10 @@
                         //var assessmentHtml = '<div>';
                         var assessmentHtml = '<div class="assessment" data-outof="' + assessment.total + '" data-key="' + assessment.key + '" data-id="' + assessment.id + '">';
                         assessmentHtml += '<p>Assessment: ' + assessment.assessment_name + '</p>';
-                        assessmentHtml += '<p>Out of: ' + assessment.total + '</p>';
+                        assessmentHtml += '<p>' + assessment.marks + ' Out of: ' + assessment.total + '</p>';
                         // assessmentHtml += '<label for="total">Total:</label>';
-                        assessmentHtml += '<input class="form-control total-input" type="number" name="total" value="' + assessment.marks + '">';
+                        //assessmentHtml += '<input class="form-control total-input" type="number" name="total" value="' + assessment.marks + '">';
+                        assessmentHtml += '<input class="form-control total-input" type="number" name="total" value="0">';
                         assessmentHtml += '<hr>';
                         // Add more fields as needed
 
@@ -682,12 +684,12 @@
                     });
                     var assessmentHtml = '<br/>';
                     assessmentHtml += ' <div class="form-check">';
-                    assessmentHtml += '    <input class="form-check-input" value="1" type="radio" name="operation" id="operation1" checked>';
-                    assessmentHtml += '        <label class="form-check-label" for="flexRadioDefault1">Add</label>';
+                    assessmentHtml += '    <input class="form-check-input" value="0" type="radio" name="operation" id="operation1" >';
+                    assessmentHtml += '        <label class="form-check-label" for="flexRadioDefault1">Subtract</label>';
                     assessmentHtml += '</div>';
                     assessmentHtml += '<div class="form-check">';
-                    assessmentHtml += '    <input class="form-check-input" value="0" type="radio" name="operation" id="operation2">';
-                    assessmentHtml += '        <label class="form-check-label" for="flexRadioDefault2">Subtract</label>';
+                    assessmentHtml += '    <input class="form-check-input" value="1" type="radio" name="operation" id="operation2" >';
+                    assessmentHtml += '        <label class="form-check-label" for="flexRadioDefault2">Add</label>';
                     assessmentHtml += '</div>';
                     modalBody.append(assessmentHtml);
 
@@ -712,7 +714,7 @@
 
     //modify for all launchmodal
 
-    function StrMod4All(program, academic, code) {
+    function StrMod4All(program, academic, code,type) {
         console.log(program);
 
         var modalBody = $('#staticBackdrop .modal-body');
@@ -727,7 +729,8 @@
             data: {
                 academicPeriodID: academic,
                 programID: program,
-                code: code
+                code: code,
+                type:type
             },
             success: function (resp) {
                 // Update the display mode with the new value
@@ -763,12 +766,12 @@
                     });
                     var assessmentHtml = '<br/>';
                     assessmentHtml += ' <div class="form-check">';
-                    assessmentHtml += '    <input class="form-check-input" value="0" type="radio" name="operation" id="operation1" checked>';
-                    assessmentHtml += '        <label class="form-check-label" for="flexRadioDefault1">Add</label>';
+                    assessmentHtml += '    <input class="form-check-input" value="0" type="radio" name="operation" id="operation1" >';
+                    assessmentHtml += '        <label class="form-check-label" for="flexRadioDefault1">Subtract</label>';
                     assessmentHtml += '</div>';
                     assessmentHtml += '<div class="form-check">';
                     assessmentHtml += '    <input class="form-check-input" value="1" type="radio" name="operation" id="operation2" >';
-                    assessmentHtml += '        <label class="form-check-label" for="flexRadioDefault2">Subtract</label>';
+                    assessmentHtml += '        <label class="form-check-label" for="flexRadioDefault2">Add</label>';
                     assessmentHtml += '</div>';
                     modalBody.append(assessmentHtml);
 
@@ -792,7 +795,6 @@
         ;
 
     }
-
     // Attach a click event handler to the Submit button
     $('#submitButton').on('click', function () {
         // Create an array to store the updated "Total" and "key" values
@@ -807,7 +809,7 @@
         assessmentContainers.each(function () {
             var assessment = {};
             assessment.total = $(this).find('.total-input').val();
-            assessment.total = $(this).find('.total-input').val();
+            //assessment.total = $(this).find('.total-input').val();
             assessment.id = $(this).data('id');
             assessment.key = $(this).data('key');
             assessment.code = $(this).data('code');
@@ -818,39 +820,51 @@
 
         let url = '{{ route('BoardofExaminersUpdateResults')}}';
         var program = $('input[name="program"]').val();
-        var operation = $('input[name="operation"]').val();
-        //url = url.replace(':id', classID);
-        // Perform an AJAX request to update the database with the new value
-        // You can use Laravel's route and controller for this
-        //console.log(newValues);
-        $.ajax({
-            url: url, // Replace with the actual route
-            method: 'POST',
-            dataType: 'json',
-            data: {
-                updatedAssessments: updatedAssessments,
-                program: program,
-                operation: operation
+        //var operation = $('input[name="operation"]').val();
+        //var operation = $('input[name="operation"]:last').val();
+        var radioButtons = $('input[type="radio"]');
+        var lastClickedRadioButton = radioButtons.filter(':checked');
 
-            },
-            success: function (resp) {
-                // Update the display mode with the new value
-                console.log(resp)
-                if (resp.ok === true) {
-                    $('#staticBackdrop').modal('hide');
+// Get the value of the last radio button that was clicked.
+        var operation = lastClickedRadioButton.val();
+        if (operation === '' || !lastClickedRadioButton.is(':checked')) {
+            flash({
+                msg: 'Check the operation to undertake',
+                type: 'danger'
+            });
+        } else{
+            $.ajax({
+                url: url, // Replace with the actual route
+                method: 'POST',
+                dataType: 'json',
+                data: {
+                    updatedAssessments: updatedAssessments,
+                    program: program,
+                    operation: operation
 
-                } else {
-                    $('#staticBackdrop').modal('hide');
+                },
+                success: function (resp) {
+                    // Update the display mode with the new value
+                    console.log(resp)
+                    if (resp.ok === true) {
+                        $('#staticBackdrop').modal('hide');
+
+                    } else {
+                        $('#staticBackdrop').modal('hide');
+                    }
+                    resp.ok && resp.msg ? flash({msg: resp.msg, type: 'success'}) : flash({
+                        msg: resp.msg,
+                        type: 'danger'
+                    });
+                }, error: function (xhr, status, error) {
+                    flash({msg: error, type: 'danger'})
                 }
-                resp.ok && resp.msg ? flash({msg: resp.msg, type: 'success'}) : flash({msg: resp.msg, type: 'danger'});
-            }, error: function (xhr, status, error) {
-                flash({msg: error, type: 'danger'})
-            }
-        });
-
+            });
+            $('#staticBackdrop').modal('hide');
+    }
         // You now have an array containing objects with "Total" and "key" values
         console.log(updatedAssessments);
-        $('#staticBackdrop').modal('hide');
+       // $('#staticBackdrop').modal('hide');
 
         // You can send this data to the server using an AJAX request or perform any other action as needed.
     });
@@ -892,6 +906,7 @@
         });
         var academic = $('input[name="academic"]').val();
         var program = $('input[name="program"]').val();
+        var type = $('input[name="typepublish"]').val();
         console.log(academic);
         if (ids != '') {
             $(this).attr("disabled", true);
@@ -903,7 +918,8 @@
                     _token: $('meta[name="csrf-token"]').attr('content'),
                     ids: ids,
                     programID: program,
-                    academicPeriodID: academic
+                    academicPeriodID: academic,
+                    type:type
                 },
                 success: function (resp) {
                     console.log(resp)
@@ -928,6 +944,104 @@
 
 
     //off script load more results
+    function LoadMoreResultsCas(current_page, last_page, per_page, program, academic) {
+
+        // $('.load-more-results').attr("disabled", true);
+        // $('.load-more-results').html('<i class="fa fa-spinner fa-spin"></i> Load More');
+
+        var level_name = $('input[name="level_name"]').val();
+
+        $.ajax({
+            url: '{{ route('load.more.results.board.Cas') }}',
+            type: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                current_page: current_page,
+                last_page: last_page,
+                per_page: per_page,
+                program: program,
+                academic: academic,
+                level_name: level_name
+            },
+            success: function (data) {
+                console.log(data)
+                if (data && Object.keys(data).length > 0) {
+                    $.each(data, function (academicId, academicData) {
+                        // Loop through the students in each academic data
+                        $.each(academicData.students, function (studentId, student) {
+                            // Create a table row for each course
+                            var coursesHtml = '';
+                            var i = 1;
+                            $.each(student.courses, function (courseCode, course) {
+                                coursesHtml += `
+                                <tr>
+                                    <td>${i++}</td>
+                                    <td>${courseCode}</td>
+                                    <td>${course.title}</td>
+                                    <td>${course.CA}</td>
+                                    <td>`;
+
+                                if (true) {
+                                    coursesHtml += `<td>
+                                  <a onclick="modifyMarks('${student.student_id}','${academicData.program}','${academicData.academic}','${courseCode}')" class="nav-link"><i class="icon-pencil"></i></a>
+                                </td>`;
+                                }
+                                coursesHtml += `</td>
+                                </tr>`;
+                            });
+
+                            // Append the student data to your table
+                            var studentHtml = `
+                            <table class="table table-hover table-striped-columns mb-3">
+                                <div class="justify-content-between">
+                                                    <h5><strong>${student.name}</strong></h5>
+                                                    <h5><strong>${student.student_id}</strong></h5>
+
+                                                </div>
+                                <thead>
+                                    <tr>
+                                        <th>S/N</th>
+<th>Course Code</th>
+                                        <th>Course Name</th>
+                                        <th>Total</th>
+                                        <th>Modify</th>
+                                    </tr>
+                                </thead>
+                                <tbody>${coursesHtml}</tbody>
+                            </table>
+                            <p class="bg-success p-3 align-bottom">Comment: ${student.commentData}
+
+                            <input onchange="checkdata()" type="checkbox" name="ckeck_user" value="${1}" class="ckeck_user float-right p-5" data-id="${student.student_id}">
+                                <label for="publish" class="mr-3 float-right">Publish</label>
+                                </p>
+                            <hr>
+                        `;
+                            updateLoadMoreButton(academicData);
+                            if (academicData.last_page === academicData.current_page) {
+                                $('.load-more-results').hide();
+                            }
+
+                            // Append the studentHtml to a container div
+                            $('.loading-more-results').append(studentHtml);
+                        });
+                        $('#pagenumbers').text('Page '+academicData.current_page+' of '+academicData.last_page)
+                    });
+
+                    // Append studentHtml to the resultsContainer
+                    flash({msg: 'success', type: 'success'});
+                } else {
+                    $('.load-more-results').hide();
+                    flash({msg: 'No data to display', type: 'warning'});
+                }
+                // $('.load-more-results-first').hide();
+            }, error: function (xhr, status, error) {
+                flash({msg: error, type: 'danger'})
+
+                // $('.loading-more-results').attr("disabled", false);
+                // $('.loading-more-results').html('<i class="fa fa-share"></i> Load More');
+            }
+        });
+    }
 
     function LoadMoreResults(current_page, last_page, per_page, program, academic) {
 
@@ -1036,7 +1150,41 @@
             }
         });
     }
+function downloadCSVtemplate(){
+    let url = '{{ route('template.download')}}';
+    var classID = $('input[name="classIDTemplate"]').val();
+    var AssessID = $('input[name="AssessIDTemplate"]').val();
+        $.ajax({
+            url: url, // Replace with the actual route
+            method: 'POST',
+            dataType: 'json',
+            data: {
+                classId: classID,
+                assessID: AssessID
+            },
+            success: function (resp) {
+                // resp.ok && resp.msg ? flash({msg: resp.msg, type: 'success'}) : flash({
+                //     msg: resp.msg,
+                //     type: 'danger'
+                // });
 
+                if (resp.fileUrl) {
+                    // If the response contains a file URL, trigger the download
+                    var link = document.createElement('a');
+                    link.href = resp.fileUrl;
+                    link.download = 'results_upload_template.csv'; // Set the default file name
+                    link.click();
+                } else if (resp.ok && resp.msg) {
+                    flash({ msg: resp.msg, type: 'success' });
+                } else {
+                    flash({ msg: resp.msg, type: 'danger' });
+                }
+
+            }, error: function (xhr, status, error) {
+                flash({msg: error, type: 'danger'})
+            }
+        });
+    }
     function updateLoadMoreButton(academicData) {
         // Dynamically set the onclick function with the new academicData
         var button = $('.load-more-results-first');
@@ -1050,7 +1198,7 @@
         }
     }
     $(document).ready(function () {
-        var ctxs = document.getElementById("BestBasedOnClass").getContext('2d');
+   /*     var ctxs = document.getElementById("BestBasedOnClass").getContext('2d');
         var data = {!! (isset($grouped) && !empty($grouped) ? $grouped:'00') !!};
         var studentNames = [];
         var totals = [];
@@ -1065,7 +1213,7 @@
             data: {
                 labels: studentNames,
                 datasets: [{
-                    label: 'Top performing students in IT second year',
+                    label: 'Top performing students',
                     data: totals,
                     backgroundColor: [
                         'rgba(255, 99, 132, 0.2)',
@@ -1096,7 +1244,7 @@
                 }
             }
         });
-
+*/
 //second chart
 
             var ctx = document.getElementById("myChart").getContext('2d');
@@ -1202,4 +1350,62 @@
     $(document).on('focus', '.date-pick', function () {
         $(this).datepicker();
     });
+
+    //assessments get levels
+    function getLevelAssess(program) {
+        var levelId = $('.level_idAss');
+        var academic = $('input[name="academic"]').val();
+        $.ajax({
+            url: '{{ route('get_levelsAsses') }}',
+            type: 'POST',
+            data: {
+                programID: program,
+                academicPeriodID: academic
+            },
+            success: function (resp) {
+                console.log(resp)
+                levelId.empty();
+                levelId.append($('<option>', {
+                    value: '',
+                    text: ''
+                }));
+                $.each(resp, function (i, data) {
+                    levelId.append($('<option>', {
+                        value: data.id,
+                        text: data.name
+                    }));
+                });
+
+            }, error: function (xhr, status, error) {
+                flash({msg: error, type: 'danger'})
+            }
+        });
+    }
+
+    function getAnalysis(l_id) {
+
+        var levelId = $('.level_id');
+        $.ajax({
+            url: '{{ route('publishProgramResults') }}',
+            type: 'POST',
+            data: {
+                _token: $('meta[name="csrf-token"]').attr('content'),
+                leve_id: l_id,
+                programID: program,
+                academicPeriodID: academic
+            },
+            success: function (resp) {
+                levelId.empty();
+                $.each(resp, function (i, data) {
+                    levelId.append($('<option>', {
+                        value: data.id,
+                        text: data.name
+                    }));
+                });
+
+            }, error: function (xhr, status, error) {
+                flash({msg: error, type: 'danger'})
+            }
+        });
+    }
 </script>

@@ -34,6 +34,7 @@ use Auth;
 use Carbon\Carbon;
 use DB;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ClassAssessmentsController extends Controller
@@ -124,14 +125,23 @@ class ClassAssessmentsController extends Controller
         $validatedData = $request->validate([
             'file' => 'required|mimes:csv,excel,xls,xlsx|max:2048',
             'academic' => 'required',
-            'programID' => 'required|integer',
+            'course' => 'required',
+            'title' => 'required',
+            'AssessIDTemplate' => 'required',
+            'classIDTemplate' => 'required',
+            'assesTotal' => 'required',
             'instructor' => 'sometimes'
         ]);
 
 
         try {
-            $academic = Qs::decodeHash($validatedData['academic']);
-            $program = $validatedData['programID'];
+            $academicC = $validatedData['academic'];
+            $courseC = $validatedData['course'];
+            $titleC = $validatedData['title'];
+            $AssessIDTemplateC = $validatedData['AssessIDTemplate'];
+            $classIDTemplate = $validatedData['classIDTemplate'];
+            $assesTotal = $validatedData['assesTotal'];
+            //$program = $validatedData['programID'];
             $isInstructor = $validatedData['instructor'] == 'instructorav' ? 1 : 0;
 
             $import = new ImportClass(); // Replace with your import class
@@ -141,56 +151,70 @@ class ClassAssessmentsController extends Controller
             $data = Excel::toCollection('', $path, null, \Maatwebsite\Excel\Excel::TSV)[0];
 
             // Loop through the data and add two additional columns
-            $processedData = $data->map(function ($row) use ($program, $academic) {
+            /*$processedData = $data->map(function ($row) use ($program, $academic) {
                 // Add two additional columns with desired values
                 $row['academicPeriodID'] = $academic;
                 $row['programID'] = $program;
 
                 return $row;
-            });
+            });*/
 
             $data->forget(0);
             //$firstElement = $data->shift();
+
             foreach ($data as $row) {
+                $academicPeriodID = $academicC;
+                $studentID = $row[2];    // Student ID
+                $code = $row[3];
+                $title = $row[4];
+                $academic = $row[5];
+                $aseesID = $row[7];
+                $total = $row[9];
+                $outof = $row[8];
+                $user = User::where('student_id', '=', $studentID)->get()->first();
+                if (!empty($user)) {
+                    $program = UserProgram::where('userID', $user->id)->get()->first();
+                    $progression = self::checkProgression($user->id, $program->programID);
+                    $student_level = $progression['currentLevelId'];
+                    $key = $courseC . '-' . $studentID . '-' . $academicC . '-' . $program->programID . '-' . $AssessIDTemplateC . '-' . $student_level;
 
-                $academicPeriodID   = $academic;
-                $studentID          = $row[0];    // Student ID
-                $code               = $row[1];
-                $title              = $row[2];
-                $total              = $row[3];
-                $programID          = $program;
-                $key                = $code . '-' . $studentID . '-' . $academicPeriodID . '-' . $programID;
 
-                $existingRow = GradeBookImport::where('key', $key)->get()->first();
+                    $existingRow = GradeBookImport::where('key', $key)->get()->first();
 
-                if (!empty($existingRow)) {
-                    $existingRow->delete();
-                }
+                    if (!empty($existingRow)) {
+                        $existingRow->delete();
+                    }
 
-                // check if user has registered for this academic period.
-                $user = User::where('student_id', $studentID)->get()->first();
-                if ($user) {
-                    $lastEnrollment      = Enrollment::where('userID', $user->id)->get()->last();
+                    // check if user has registered for this academic period.
+                    $user = User::where('student_id', $studentID)->get()->first();
+                    if ($user) {
+                        $lastEnrollment = Enrollment::where('userID', $user->id)->get()->last();
 
-                    if ($lastEnrollment) {
-
-                        $lastEnrolledClass = Classes::where('id', $lastEnrollment->classID)->get()->first();
-                       // dd($lastEnrollment);
-                        if ($lastEnrolledClass) {
-                            # Proceed to importing
+                        if ($lastEnrollment) {
+                            $lastEnrolledClass = Classes::where('id', $lastEnrollment->classID)->get()->first();
+                            // dd($lastEnrollment);
+                            if ($lastEnrolledClass) {
+                                # Proceed to importing
                                 # Add results to imports
                                 $course = Courses::where('code', $code)->get()->first();
                                 if ($course) {
-                                    GradeBookImport::create([
-                                        'programID'         => $program,
-                                        'academicPeriodID'  => $academicPeriodID,
-                                        'studentID'         => $studentID,
-                                        'total'             => $total, // Total
-                                        'title'             => $title,
-                                        'code'              => $code,
-                                        'key'               => $key,
-                                    ]);
+                                    if ($academicC == $academic && $titleC == $title && $code == $courseC && $aseesID == $AssessIDTemplateC && $total<=$assesTotal) {
+                                        GradeBookImport::create([
+                                            'programID' => $program->programID,
+                                            'academicPeriodID' => $academicPeriodID,
+                                            'studentID' => $studentID,
+                                            'total' => $total, // Total
+                                            'title' => $title,
+                                            'code' => $code,
+                                            'key' => $key,
+                                            'assessmentID' => $aseesID,
+                                            'student_level_id' => $student_level,
+                                            'created_at' => now(),
+                                            'updated_at' => now(),
+                                        ]);
+                                    }
                                 }
+                            }
                         }
                     }
                 }
@@ -207,12 +231,14 @@ class ClassAssessmentsController extends Controller
 //                ]);
             }
             //$data->push($firstElement);
-           // $data->prepend($firstElement);
+            // $data->prepend($firstElement);
             // Now, you have the data with two additional columns
             // You can choose to save this data or manipulate it further before saving
 
             // Example: Saving the processed data
             //ImportList::insert($processedData->toArray());
+            //return route('myClassStudentList', ['class' => Qs::hash($classIDTemplate), 'assessid' => Qs::hash($AssessIDTemplateC)]);
+            /*
             $dataS = $this->prepareResultsview($validatedData['academic']);
             if ($isInstructor == 1) {
 
@@ -221,7 +247,7 @@ class ClassAssessmentsController extends Controller
 
                 //dd($data);
                 return view('pages.academics.class_assessments.show', compact('data'))->with('flash_success', __('msg.retrieve_ok')); // Pass the data to the view
-            }
+            }*/
 
         } catch (\Exception $e) {
             //return redirect()->route('dashboard')->with('error', 'Error importing data: ' . $e->getMessage());
@@ -244,6 +270,8 @@ class ClassAssessmentsController extends Controller
             // Handle any exceptions that occur during the import process
             return redirect()->route('import.index')->with('error', 'Error importing data: ' . $e->getMessage());
         }*/
+        //return Qs::jsonStoreOk();
+        return redirect(route('myClassStudentList', ['class' => Qs::hash($classIDTemplate), 'assessid' => Qs::hash($AssessIDTemplateC)]));
     }
 
     /**
@@ -252,11 +280,11 @@ class ClassAssessmentsController extends Controller
     public function store(ClassAssessments $req)
     {
         $data = $req->only(['assesmentID', 'classID', 'total', 'academic', 'end_date']);
-        $classData = ClassAssessment::where('classID',$data['classID'])->get();
+        $classData = ClassAssessment::where('classID', $data['classID'])->get();
         $data['end_date'] = date('Y-m-d', strtotime($data['end_date']));
         $data['key'] = $data['classID'] . '-' . $data['academic'] . '-' . $data['assesmentID'];
         $totalValue = 0;
-        foreach ($classData as $class){
+        foreach ($classData as $class) {
             $totalValue = $totalValue + $class['total'];
         }
         $existingRecord = ClassAssessment::where([
@@ -265,11 +293,11 @@ class ClassAssessmentsController extends Controller
         ])->first();
 
         if ($existingRecord) {
-            return Qs::json('Data already exists',false);
-        }else{
-            if ($totalValue > 100 || ($totalValue+$data['total'])>100){
-                return Qs::json('Total for the assessment is greater than 100',false);
-            }else{
+            return Qs::json('Data already exists', false);
+        } else {
+            if ($totalValue > 100 || ($totalValue + $data['total']) > 100) {
+                return Qs::json('Total for the assessment is greater than 100', false);
+            } else {
                 $this->classaAsessmentRepo->create($data);
                 return Qs::jsonStoreOk();
             }
@@ -314,29 +342,29 @@ class ClassAssessmentsController extends Controller
     {
         $academicPeriodID = Qs::decodeHash($academic_id);
         //self::getClasses()
-        if (Auth::user()->user_type == 'instructor'){
-           /* $apClasses = DB::table('ac_classes')->where('academicPeriodID', '=', $academicPeriodID)
-                ->where('ac_classes.instructorID', '=', Auth::user()->id)
-                ->select('code', 'name', 'ac_courses.id as courseID', 'ac_classes.id as id', 'academicPeriodID','users.first_name','users.last_name',
-                    DB::raw('COUNT(ac_enrollments.id) as enrollment_count'))
-                ->join('ac_courses', 'ac_courses.id', '=', 'ac_classes.courseID')
-                ->join('users','users.id','=','ac_classes.instructorID')
-                ->join('ac_enrollments','ac_enrollments.classID','=','ac_classes.id')
-                ->groupBy('code', 'name', 'ac_courses.id', 'ac_classes.id', 'academicPeriodID', 'users.first_name', 'users.last_name')
-                ->get();*/
+        if (Auth::user()->user_type == 'instructor') {
+            /* $apClasses = DB::table('ac_classes')->where('academicPeriodID', '=', $academicPeriodID)
+                 ->where('ac_classes.instructorID', '=', Auth::user()->id)
+                 ->select('code', 'name', 'ac_courses.id as courseID', 'ac_classes.id as id', 'academicPeriodID','users.first_name','users.last_name',
+                     DB::raw('COUNT(ac_enrollments.id) as enrollment_count'))
+                 ->join('ac_courses', 'ac_courses.id', '=', 'ac_classes.courseID')
+                 ->join('users','users.id','=','ac_classes.instructorID')
+                 ->join('ac_enrollments','ac_enrollments.classID','=','ac_classes.id')
+                 ->groupBy('code', 'name', 'ac_courses.id', 'ac_classes.id', 'academicPeriodID', 'users.first_name', 'users.last_name')
+                 ->get();*/
 
             $grouped = DB::table('ac_classes')->where('academicPeriodID', '=', $academicPeriodID)
                 ->where('ac_classes.instructorID', '=', Auth::user()->id)
-                ->select('ac_courses.code', 'ac_courses.name', 'ac_courses.id as courseID', 'ac_classes.id as id', 'academicPeriodID','users.first_name',
-                    'users.last_name','ac_assessmentTypes.name as assessTypeName','ac_assessmentTypes.id as assessTypeId',
+                ->select('ac_courses.code', 'ac_courses.name', 'ac_courses.id as courseID', 'ac_classes.id as id', 'academicPeriodID', 'users.first_name',
+                    'users.last_name', 'ac_assessmentTypes.name as assessTypeName', 'ac_assessmentTypes.id as assessTypeId',
                     DB::raw('COUNT(ac_enrollments.id) as enrollment_count'))
                 ->join('ac_courses', 'ac_courses.id', '=', 'ac_classes.courseID')
-                ->join('ac_classAssesments','ac_classes.id','=','ac_classAssesments.classID')
-                ->join('ac_assessmentTypes','ac_assessmentTypes.id','=','ac_classAssesments.assesmentID')
-                ->join('users','users.id','=','ac_classes.instructorID')
-                ->join('ac_enrollments','ac_enrollments.classID','=','ac_classes.id')
+                ->join('ac_classAssesments', 'ac_classes.id', '=', 'ac_classAssesments.classID')
+                ->join('ac_assessmentTypes', 'ac_assessmentTypes.id', '=', 'ac_classAssesments.assesmentID')
+                ->join('users', 'users.id', '=', 'ac_classes.instructorID')
+                ->join('ac_enrollments', 'ac_enrollments.classID', '=', 'ac_classes.id')
                 ->groupBy('ac_courses.code', 'ac_courses.name', 'ac_courses.id', 'ac_classes.id', 'academicPeriodID', 'users.first_name', 'users.last_name'
-                    ,'ac_assessmentTypes.name','ac_assessmentTypes.id')
+                    , 'ac_assessmentTypes.name', 'ac_assessmentTypes.id')
                 ->get();
 
             $groupedApClasses = [];
@@ -371,18 +399,18 @@ class ClassAssessmentsController extends Controller
             $data['infor'] = $this->academic->find($academicPeriodID);
             //dd($groupedApClasses);
             return view('pages.academics.class_assessments.show_classes', compact('apClasses'), $data);
-        }else{
+        } else {
             $grouped = DB::table('ac_classes')->where('academicPeriodID', '=', $academicPeriodID)
-                ->select('ac_courses.code', 'ac_courses.name', 'ac_courses.id as courseID', 'ac_classes.id as id', 'academicPeriodID','users.first_name',
-                    'users.last_name','ac_assessmentTypes.name as assessTypeName','ac_assessmentTypes.id as assessTypeId',
+                ->select('ac_courses.code', 'ac_courses.name', 'ac_courses.id as courseID', 'ac_classes.id as id', 'academicPeriodID', 'users.first_name',
+                    'users.last_name', 'ac_assessmentTypes.name as assessTypeName', 'ac_assessmentTypes.id as assessTypeId',
                     DB::raw('COUNT(ac_enrollments.id) as enrollment_count'))
                 ->join('ac_courses', 'ac_courses.id', '=', 'ac_classes.courseID')
-                ->join('ac_classAssesments','ac_classes.id','=','ac_classAssesments.classID')
-                ->join('ac_assessmentTypes','ac_assessmentTypes.id','=','ac_classAssesments.assesmentID')
-                ->join('users','users.id','=','ac_classes.instructorID')
-                ->join('ac_enrollments','ac_enrollments.classID','=','ac_classes.id')
+                ->join('ac_classAssesments', 'ac_classes.id', '=', 'ac_classAssesments.classID')
+                ->join('ac_assessmentTypes', 'ac_assessmentTypes.id', '=', 'ac_classAssesments.assesmentID')
+                ->join('users', 'users.id', '=', 'ac_classes.instructorID')
+                ->join('ac_enrollments', 'ac_enrollments.classID', '=', 'ac_classes.id')
                 ->groupBy('ac_courses.code', 'ac_courses.name', 'ac_courses.id', 'ac_classes.id', 'academicPeriodID', 'users.first_name', 'users.last_name'
-                    ,'ac_assessmentTypes.name','ac_assessmentTypes.id')
+                    , 'ac_assessmentTypes.name', 'ac_assessmentTypes.id')
                 ->get();
             $groupedApClasses = [];
             foreach ($grouped as $class) {
@@ -411,7 +439,7 @@ class ClassAssessmentsController extends Controller
 
             // Convert the associative array to indexed array if needed
             $apClasses = array_values($groupedApClasses);
-           // dd($apClasses);
+            // dd($apClasses);
             $data['open'] = $this->academic->getAllopen();
             $data['infor'] = $this->academic->find($academicPeriodID);
             //dd($dataS);
@@ -419,7 +447,8 @@ class ClassAssessmentsController extends Controller
         }
 
     }
-    public function StudentListResults($class,$assessid)
+
+    public function StudentListResults($class, $assessid)
     {
         $class = Qs::decodeHash($class);
         $instructorID = Auth::user()->id;
@@ -480,9 +509,9 @@ class ClassAssessmentsController extends Controller
 // Return the final result
         $assessID = Qs::decodeHash($assessid);
         //dd($assessID);
-        $academicPeriodsData = Classes::where('id', $class)->with(['course', 'enrollments.user','academicPeriod','assessments'])
+        $academicPeriodsData = Classes::where('id', $class)->with(['course', 'enrollments.user', 'academicPeriod', 'assessments'])
             ->get();
-        $assessment_total = ClassAssessment::where('classID',$class)->where('assesmentID',$assessID)->get()->first();
+        $assessment_total = ClassAssessment::where('classID', $class)->where('assesmentID', $assessID)->get()->first();
         $aseessname = AssessmentTypes::find($assessID);
         $class = $academicPeriodsData->map(function ($class) use ($assessment_total, $aseessname, $assessID) {
             return [
@@ -496,8 +525,8 @@ class ClassAssessmentsController extends Controller
                     'instructorID' => $class->instructorID,
                     'instructorName' => $class->instructor->first_name . ' ' . $class->instructor->last_name,
                 ],
-                    'apid' => $class->academicPeriodID,
-                    'code' => $class->academicPeriod->code,
+                'apid' => $class->academicPeriodID,
+                'code' => $class->academicPeriod->code,
                 'students' => $class->enrollments->map(function ($enrollment) use ($assessID, $class) {
                     return [
                         'userID' => $enrollment->user->id,
@@ -505,7 +534,7 @@ class ClassAssessmentsController extends Controller
                         'first_name' => $enrollment->user->first_name,
                         'last_name' => $enrollment->user->last_name,
                         'program' => self::getUserProgramID($enrollment->user->id),
-                        'total' => $this->getcurrentTotalonImports($assessID,$enrollment->user->student_id, $enrollment->user->id, $class->academicPeriodID, $class->course->code)//to get this from imports table
+                        'total' => $this->getcurrentTotalonImports($assessID, $enrollment->user->student_id, $enrollment->user->id, $class->academicPeriodID, $class->course->code)//to get this from imports table
                     ];
                 }),
             ];
@@ -515,7 +544,90 @@ class ClassAssessmentsController extends Controller
         return view('pages.academics.class_assessments.instructor_assessment.index', compact('class'), $data);
     }
 
-    public function getcurrentTotalonImports($assessID,$studeID, $id, $academic, $code)
+    public function DownloadResultsTemplate(Request $request)
+    {
+        $classes = $request->input('classID');
+        $assessID = $request->input('assessID');
+        $csvContent = "";
+        $class = $request->input('classId');
+        $assessID = $request->input('assessID');
+        //dd($class);
+        $academicPeriodsData = Classes::where('id', $class)->with(['course', 'enrollments.user', 'academicPeriod', 'assessments'])
+            ->get();
+        $assessment_total = ClassAssessment::where('classID', $class)->where('assesmentID', $assessID)->get()->first();
+        $aseessname = AssessmentTypes::find($assessID);
+        $class = $academicPeriodsData->map(function ($class) use ($assessment_total, $aseessname, $assessID) {
+            return [
+                'classID' => $class->id,
+                'courseName' => $class->course->name,
+                'courseCode' => $class->course->code,
+                'assess_total' => $assessment_total->total,
+                'assessmentId' => $assessID,
+                'assessmentName' => $aseessname->name,
+                'instructor' => [
+                    'instructorID' => $class->instructorID,
+                    'instructorName' => $class->instructor->first_name . ' ' . $class->instructor->last_name,
+                ],
+                'apid' => $class->academicPeriodID,
+                'code' => $class->academicPeriod->code,
+                'students' => $class->enrollments->map(function ($enrollment) use ($assessID, $class) {
+                    return [
+                        'userID' => $enrollment->user->id,
+                        'student_id' => $enrollment->user->student_id,
+                        'first_name' => $enrollment->user->first_name,
+                        'last_name' => $enrollment->user->last_name,
+                        'program' => self::getUserProgramID($enrollment->user->id),
+                        'total' => $this->getcurrentTotalonImports($assessID, $enrollment->user->student_id, $enrollment->user->id, $class->academicPeriodID, $class->course->code)//to get this from imports table
+                    ];
+                }),
+            ];
+        })->toArray();
+        // Add header row for Enrolments By Program
+        $csvContent .= "First Name,Last Name,Student ID,Course Code,Course Name,AcademicPeriod,Program,Assessment type,Marked out of,Total\n";
+        // Extract data from Blade template loop for Enrolments By Program
+        foreach ($class as $classData) {
+            foreach ($classData['students'] as $student) {
+
+                $last_name = $student['first_name'];
+                $firstname = $student['last_name'];
+                $studentID = $student['student_id'];
+                $program = $student['program'];
+                $courseCode = $classData['courseCode'];
+                $courseName = $classData['courseName'];
+                $apid = $classData['apid'];
+                $assessmentId = $classData['assessmentId'];
+                $total = '';
+                $sometotal = $classData['assess_total'];
+                $csvContent .= "$firstname,$last_name,$studentID,$courseCode,$courseName,$apid,$program,$assessmentId,$sometotal,$total\n";
+            }
+            // dd($classData);
+        }
+        $filename = 'results_upload_template.csv';
+
+// Save the CSV content to a file
+        //dd($academicPeriodsData);
+        file_put_contents($filename, $csvContent);
+
+// Generate a response and return the file URL
+        $response = [
+            'fileUrl' => asset($filename), // Generate a URL to the file
+        ];
+
+        return response()->json($response);
+//        $filename = 'results_upload_template.csv';
+//        file_put_contents($filename, $csvContent);
+//
+//// Force download the CSV file
+//        header('Content-Type: application/csv');
+//        header('Content-Disposition: attachment; filename="' . $filename . '"');
+//        readfile($filename);
+//        unlink($filename); // Delete the temporary file
+//        exit();
+
+    }
+
+    public
+    function getcurrentTotalonImports($assessID, $studeID, $id, $academic, $code)
     {
         //$studeID = 1913589;$id = 9;$academic = 29;$code ='BAC 1100';
         $program = self::getUserProgramID($id);
@@ -529,7 +641,8 @@ class ClassAssessmentsController extends Controller
         }
     }
 
-    public function prepareResultsview($academic_id)
+    public
+    function prepareResultsview($academic_id)
     {
         $academicPeriodID = Qs::decodeHash($academic_id);
         $instructorID = Auth::user()->id;
@@ -570,7 +683,8 @@ class ClassAssessmentsController extends Controller
         return $dataS;
     }
 
-    public function getClasses(string $id)
+    public
+    function getClasses(string $id)
     {
         $classes = DB::table('ac_classes')
             ->where('ac_classes.academicPeriodID', $id)
@@ -584,7 +698,8 @@ class ClassAssessmentsController extends Controller
         return $classes;
     }
 
-    public function ProgramForResults(string $id)
+    public
+    function ProgramForResults(string $id)
     {
         $id = Qs::decodeHash($id);
         $programs = [];
@@ -612,7 +727,8 @@ class ClassAssessmentsController extends Controller
         return $programs;
     }
 
-    public function UpdateTotalResultsExams(Request $request, string $id)
+    public
+    function UpdateTotalResultsExams(Request $request, string $id)
     {
         $id = Qs::decodeHash($id);
         $total = $request->input('total');
@@ -635,7 +751,10 @@ class ClassAssessmentsController extends Controller
             return Qs::json('error failed update', false);
         }
     }
-    public function LoadMoreResults(Request $request){
+
+    public
+    function LoadMoreResults(Request $request)
+    {
         $current_page = $request->input('current_page');
         $last_page = $request->input('last_page');
         $per_page = $request->input('per_page');
@@ -661,7 +780,7 @@ class ClassAssessmentsController extends Controller
             ->where('ac_gradebook_imports.status', '=', 0)
             ->groupBy('ac_gradebook_imports.studentID')
             //->get();
-            ->paginate($per_page, ['*'], 'page', $current_page+1);
+            ->paginate($per_page, ['*'], 'page', $current_page + 1);
         $studentIds = $groupedAta->pluck('student_id');
         //dd($studentIds);
 
@@ -693,7 +812,7 @@ class ClassAssessmentsController extends Controller
             ->where('ac_gradebook_imports.programID', '=', $pid)
             ->where('ac_gradebook_imports.student_level_id', '=', $leveid)
             ->where('ac_gradebook_imports.status', '=', 0)
-            ->whereIn('ac_gradebook_imports.studentID',$studentIds)
+            ->whereIn('ac_gradebook_imports.studentID', $studentIds)
             ->get();
 
         $results = [];
@@ -701,28 +820,28 @@ class ClassAssessmentsController extends Controller
 
             $academicPeriod = $row->academicPeriod;
             $programId = $row->program_id;
-            $academic=[
+            $academic = [
                 'academic' => $row->academicPeriod,
                 'program' => $row->program_id,
             ];
             if (!isset($results[$academic['academic']])) {
                 $results[$academic['academic']] = [
                     'academic' => $row->academicPeriod,
-                    'current_page'=> $groupedAta->currentPage(),
-                    'last_page'=> $groupedAta->lastPage(),
-                    'per_page'=> $groupedAta->perPage(),
+                    'current_page' => $groupedAta->currentPage(),
+                    'last_page' => $groupedAta->lastPage(),
+                    'per_page' => $groupedAta->perPage(),
                     'program' => $row->program_id,
                     'program_name' => $row->program_name,
                     'level_name' => $level_name->name,
                     'level_id' => $leveid,
                     'program_code' => $row->program_code,
-                    'academicperiodname' =>$row->academicPeriodcode,
+                    'academicperiodname' => $row->academicPeriodcode,
                     'students' => [],
                 ];
             }
             $progression = self::checkProgression($row->userID, $row->program_id);
             $yearOfStudy = $progression['currentLevelName'];
-            if ( $row->status == 1) {
+            if ($row->status == 1) {
                 continue; // Skip this student
             }
             $studentId = $row->student_id;
@@ -732,7 +851,7 @@ class ClassAssessmentsController extends Controller
                     'student_id' => $studentId,
                     'level' => $yearOfStudy,
                     'courses' => [],
-                    'classes'=> \App\Models\Academics\AcademicPeriods::myclasses($row->userID,$row->academicPeriod)
+                    'classes' => \App\Models\Academics\AcademicPeriods::myclasses($row->userID, $row->academicPeriod)
                 ];
             }
 
@@ -743,22 +862,22 @@ class ClassAssessmentsController extends Controller
                     'title' => $row->title,
                     'CA' => 0,
                     'total' => 0,
-                    'assessments' =>[],
+                    'assessments' => [],
                 ];
 
                 $results[$academic['academic']]['students'][$studentId]['courses'][$courseCode] = $course;
             }
             // Check if the course code is already present in the classes array and remove it
-            foreach ($results[$academic['academic']]['students'][$studentId]['classes'] as $index => $class){
-                if (isset($class['course_code']) &&  $class['course_code'] == $row->code) {
+            foreach ($results[$academic['academic']]['students'][$studentId]['classes'] as $index => $class) {
+                if (isset($class['course_code']) && $class['course_code'] == $row->code) {
                     unset($results[$academic['academic']]['students'][$studentId]['classes'][$index]);
-                }else{
+                } else {
                     $results[$academic['academic']]['students'][$studentId]['courses'][$class['course_code']] = [
                         'code' => $class['course_code'],
                         'title' => $class['course_name'],
                         'CA' => 0,
                         'total' => 0,
-                        'assessments' =>[],
+                        'assessments' => [],
                     ];
                 }
             }
@@ -768,14 +887,14 @@ class ClassAssessmentsController extends Controller
             if (!isset($results[$academic['academic']]['students'][$studentId]['courses'][$courseCode]['assessments'][$assess])) {
                 $assessments = [
                     'total' => $row->total,
-                    'id'=> $row->id,
+                    'id' => $row->id,
                     'assessID' => $row->assessmentID,
                     'assessment_name' => $row->assessment_name,
                     'key' => $row->key,
                     'status' => $row->status,
                 ];
 
-                if ($row->assessment_name != 'Exam'){
+                if ($row->assessment_name != 'Exam') {
                     $results[$academic['academic']]['students'][$studentId]['courses'][$courseCode]['CA'] += $row->total;
                 }
                 $results[$academic['academic']]['students'][$studentId]['courses'][$courseCode]['total'] += $row->total;
@@ -791,12 +910,15 @@ class ClassAssessmentsController extends Controller
                 }
             }
         }
-       // dd($results);
+        // dd($results);
 
-         return $results;
+        return $results;
     }
-    public function BoardofExaminersUpdateResults(Request $request)
+
+    public
+    function BoardofExaminersUpdateResults(Request $request)
     {
+
         $requestData = $request->input('updatedAssessments'); // Get the request data
         //dd($requestData);
         // Loop through the data and insert or update each record
@@ -839,8 +961,8 @@ class ClassAssessmentsController extends Controller
         }*/
         //dd($requestData[0]['code']);
         $operation = $request->input('operation');
-        $sOperation = ($operation==1 ? '+' : '-');
-        if (isset($requestData[0]['code'])){
+        $sOperation = ($operation == 1 ? '+' : '-');
+        if (isset($requestData[0]['code'])) {
             $program = $request->input('program');
             $operation = $request->input('operation');
             $studentTotals = ImportList::where([
@@ -870,7 +992,7 @@ class ClassAssessmentsController extends Controller
                     ])->value('total');
                     if ($sOperation == '+') {
                         $newTotal = $currentTotal + $item['total'];
-                    }else{
+                    } else {
                         $newTotal = $currentTotal - $item['total'];
                     }
 
@@ -890,7 +1012,7 @@ class ClassAssessmentsController extends Controller
                 }
             }
             return Qs::json('Marks updated successfully', true);
-        }else {
+        } else {
             foreach ($requestData as $item) {
 
                 $currentTotal = ImportList::where([
@@ -902,7 +1024,7 @@ class ClassAssessmentsController extends Controller
 
                 if ($sOperation == '+') {
                     $newTotal = $currentTotal + $item['total'];
-                }else{
+                } else {
                     $newTotal = $currentTotal - $item['total'];
                 }
                 if ($newTotal > $item['outof']) {
@@ -920,7 +1042,8 @@ class ClassAssessmentsController extends Controller
         }
     }
 
-    public function UpdateResultsPublish(Request $request, $id)
+    public
+    function UpdateResultsPublish(Request $request, $id)
     {
         $id = Qs::decodeHash($id);
         $total = $request->input('total');
@@ -935,35 +1058,35 @@ class ClassAssessmentsController extends Controller
         }
     }
 
-    public function PostStudentResults(Request $request)
+    public
+    function PostStudentResults(Request $request)
     {
         //$id = Qs::decodeHash($id);
-        $data['academicPeriodID']  = $request->input('academicPeriodID');
-        $data['programID']  = $request->input('programID');
-        $data['studentID']  = Qs::decodeHash($request->input('studentID'));
-        $data['code']  = $request->input('code');
-        $data['title']  = $request->input('title');
-        $data['total']  = $request->input('total');
+        $data['academicPeriodID'] = $request->input('academicPeriodID');
+        $data['programID'] = $request->input('programID');
+        $data['studentID'] = Qs::decodeHash($request->input('studentID'));
+        $data['code'] = $request->input('code');
+        $data['title'] = $request->input('title');
+        $data['total'] = $request->input('total');
         $data['assessmentID'] = $request->input('type');
         $Suserid = $request->input('userID');
-        $progression = self::checkProgression($Suserid,  $data['programID']);
+        $progression = self::checkProgression($Suserid, $data['programID']);
         $data['student_level_id'] = $progression['currentLevelId'];
 
-        $data['key']  = $data['code'].'-'.$data['studentID'].'-'.$data['academicPeriodID'].'-'.$data['programID'].'-'.$data['assessmentID'].'-'.$data['student_level_id'];
+        $data['key'] = $data['code'] . '-' . $data['studentID'] . '-' . $data['academicPeriodID'] . '-' . $data['programID'] . '-' . $data['assessmentID'] . '-' . $data['student_level_id'];
 
         $id = $request->input('id');
         //$data['total'] = $request->input('total');
-        $classData = ClassAssessment::where('classID',$id)->where('assesmentID',$data['assessmentID'])->get();
+        $classData = ClassAssessment::where('classID', $id)->where('assesmentID', $data['assessmentID'])->get();
         $dateToCheck = Carbon::parse($classData[0]['end_date']);
         $currentDate = Carbon::now();
 
         if ($classData && $dateToCheck->isPast()) {
-           return Qs::json('The date has passed hence marks not updated',false);
-        }elseif ($classData && $data['total'] > $classData[0]['total']){
-            return Qs::json('The total assessment mark can not be greater than the set total for the class',false);
-        }
-        else{
-           // dd($dudate[0]['end_date']);
+            return Qs::json('The date has passed hence marks not updated', false);
+        } elseif ($classData && $data['total'] > $classData[0]['total']) {
+            return Qs::json('The total assessment mark can not be greater than the set total for the class', false);
+        } else {
+            // dd($dudate[0]['end_date']);
             //dd($dudate[0]['end_date']);
 //            GradeBookImport::create([
 //                'programID'         => $data['programID'],
@@ -978,41 +1101,42 @@ class ClassAssessmentsController extends Controller
 
             GradeBookImport::updateOrInsert(
                 [
-                    'programID'        => $data['programID'],
+                    'programID' => $data['programID'],
                     'academicPeriodID' => $data['academicPeriodID'],
-                    'studentID'        => $data['studentID'],
-                    'assessmentID'     => $data['assessmentID'],
-                    'title'            => $data['title'],
-                    'code'             => $data['code'],
-                    'key'              => $data['key'],
+                    'studentID' => $data['studentID'],
+                    'assessmentID' => $data['assessmentID'],
+                    'title' => $data['title'],
+                    'code' => $data['code'],
+                    'key' => $data['key'],
                 ],
                 [
-                    'total'            => $data['total'],
-                    'status'             => 0,
-                    'student_level_id'  => $data['student_level_id'],
-                    'created_at'       => now(),
-                    'updated_at'       => now(),
+                    'total' => $data['total'],
+                    'status' => 0,
+                    'student_level_id' => $data['student_level_id'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
                 ]
             );
             return Qs::jsonStoreOk();
         }
-/*
-        $existingData = ImportList::where('academicPeriodID', $data['academicPeriodID'])
-            ->where('programID', $data['programID'])
-            ->where('studentID', $data['studentID'])
-            ->where('code', $data['code'])
-            ->where('title', $data['title'])
-            ->first();
-        dd($data);
-        if (count($data) > 0 && $existingData) {
-            $this->classaAsessmentRepo->addResults($data);
-            return Qs::jsonStoreOk();
-        } else {
-            return Qs::json('error', 'Okay', ['message' => 'failed create']);
-        }*/
+        /*
+                $existingData = ImportList::where('academicPeriodID', $data['academicPeriodID'])
+                    ->where('programID', $data['programID'])
+                    ->where('studentID', $data['studentID'])
+                    ->where('code', $data['code'])
+                    ->where('title', $data['title'])
+                    ->first();
+                dd($data);
+                if (count($data) > 0 && $existingData) {
+                    $this->classaAsessmentRepo->addResults($data);
+                    return Qs::jsonStoreOk();
+                } else {
+                    return Qs::json('error', 'Okay', ['message' => 'failed create']);
+                }*/
     }
 
-    public function GetProgramsToPublish(string $id)
+    public
+    function GetProgramsToPublish(string $id)
     {
         $id = Qs::decodeHash($id);
         //dd($id);
@@ -1036,7 +1160,7 @@ class ClassAssessmentsController extends Controller
             ->where('ac_gradebook_imports.academicPeriodID', '=', $id)
             // ->groupBy('ac_programs.id')
             ->distinct()
-            ->groupBy('ac_programs.id', 'ac_programs.name', 'ac_programs.code','ac_code','status','level_id','level_name')
+            ->groupBy('ac_programs.id', 'ac_programs.name', 'ac_programs.code', 'ac_code', 'status', 'level_id', 'level_name')
             ->get();
 
         $groupedApClasses = [];
@@ -1082,7 +1206,8 @@ class ClassAssessmentsController extends Controller
         return view('pages.academics.class_assessments.edit', compact('programs'), $academic);
     }
 
-    public function GetProgramResults($aid, $pid)
+    public
+    function GetProgramResults($aid, $pid)
     {
         $aid = Qs::decodeHash($aid);
         $pid = Qs::decodeHash($pid);
@@ -1091,7 +1216,7 @@ class ClassAssessmentsController extends Controller
 
         $results = DB::table('ac_gradebook_imports')
             ->join('users', 'users.student_id', '=', 'ac_gradebook_imports.studentID')
-            ->join('ac_assessmentTypes','ac_assessmentTypes.id','=','ac_gradebook_imports.assessmentID')
+            ->join('ac_assessmentTypes', 'ac_assessmentTypes.id', '=', 'ac_gradebook_imports.assessmentID')
             ->select(
                 'ac_gradebook_imports.academicPeriodID',
                 'ac_gradebook_imports.programID',
@@ -1113,35 +1238,65 @@ class ClassAssessmentsController extends Controller
         //dd($results);
         return view('pages.academics.class_assessments.update_marks', compact('results'));
     }
-    public function getAssessToUpdate(Request $request){
+
+    public
+    function getAssessToUpdate(Request $request)
+    {
 
         $aid = $request->input('academicPeriodID');
         $pid = $request->input('programID');
         $code = $request->input('code');
+        $type = $request->input('type');
         //$aid = Qs::decodeHash($aid);
         //$pid = Qs::decodeHash($pid);
         if (!$request->has('studentID')) {
-            $academicPeriods = DB::table('ac_academicPeriods')
-                ->where('ac_academicPeriods.id', '=', $aid)
-                ->where('ac_courses.code', '=', $code)
-                ->join('ac_classes', 'ac_academicPeriods.id', '=', 'ac_classes.academicPeriodID')
-                ->join('ac_courses', 'ac_classes.courseID', '=', 'ac_courses.id')
-                ->join('ac_classAssesments', 'ac_classes.id', '=', 'ac_classAssesments.classID')
-                ->join('ac_assessmentTypes', 'ac_assessmentTypes.id', '=', 'ac_classAssesments.assesmentID')
-                ->select(
-                    'ac_academicPeriods.id AS academic_period_id',
-                    'ac_academicPeriods.code AS academic_period_code',
-                    'ac_courses.id AS course_id',
-                    'ac_courses.code AS code',
-                    'ac_courses.name AS name',
-                    'ac_classAssesments.id AS class_assessment_id',
-                    'ac_classAssesments.total',
-                    'ac_assessmentTypes.name AS assessment_type_name',
-                    'ac_assessmentTypes.id AS assessment_type_id'
-                )
-                ->get()
-                //->groupBy('class_assessment_id')
-                ->toArray(); // Convert the result to an array
+            if ($type == 'assess') {
+
+                $academicPeriods = DB::table('ac_academicPeriods')
+                    ->where('ac_academicPeriods.id', '=', $aid)
+                    ->where('ac_courses.code', '=', $code)
+                    ->join('ac_classes', 'ac_academicPeriods.id', '=', 'ac_classes.academicPeriodID')
+                    ->join('ac_courses', 'ac_classes.courseID', '=', 'ac_courses.id')
+                    ->join('ac_classAssesments', 'ac_classes.id', '=', 'ac_classAssesments.classID')
+                    ->join('ac_assessmentTypes', 'ac_assessmentTypes.id', '=', 'ac_classAssesments.assesmentID')
+                    ->where('ac_assessmentTypes.id', '!=', 1) // Add this condition to filter by assessment_type_id
+                    ->select(
+                        'ac_academicPeriods.id AS academic_period_id',
+                        'ac_academicPeriods.code AS academic_period_code',
+                        'ac_courses.id AS course_id',
+                        'ac_courses.code AS code',
+                        'ac_courses.name AS name',
+                        'ac_classAssesments.id AS class_assessment_id',
+                        'ac_classAssesments.total',
+                        'ac_assessmentTypes.name AS assessment_type_name',
+                        'ac_assessmentTypes.id AS assessment_type_id'
+                    )
+                    ->get()
+                    ->toArray(); // Convert the result to an array
+            }else{
+                $academicPeriods = DB::table('ac_academicPeriods')
+                    ->where('ac_academicPeriods.id', '=', $aid)
+                    ->where('ac_courses.code', '=', $code)
+                    ->join('ac_classes', 'ac_academicPeriods.id', '=', 'ac_classes.academicPeriodID')
+                    ->join('ac_courses', 'ac_classes.courseID', '=', 'ac_courses.id')
+                    ->join('ac_classAssesments', 'ac_classes.id', '=', 'ac_classAssesments.classID')
+                    ->join('ac_assessmentTypes', 'ac_assessmentTypes.id', '=', 'ac_classAssesments.assesmentID')
+                    ->select(
+                        'ac_academicPeriods.id AS academic_period_id',
+                        'ac_academicPeriods.code AS academic_period_code',
+                        'ac_courses.id AS course_id',
+                        'ac_courses.code AS code',
+                        'ac_courses.name AS name',
+                        'ac_classAssesments.id AS class_assessment_id',
+                        'ac_classAssesments.total',
+                        'ac_assessmentTypes.name AS assessment_type_name',
+                        'ac_assessmentTypes.id AS assessment_type_id'
+                    )
+                    ->get()
+                    //->groupBy('class_assessment_id')
+                    ->toArray(); // Convert the result to an array
+
+            }
 
 // Create an array where 'classAssessments' is the key
             $classAssessments = [];
@@ -1149,45 +1304,69 @@ class ClassAssessmentsController extends Controller
             foreach ($academicPeriods as $classAssessmentId => $details) {
                 $classAssessments[$classAssessmentId] = $details;
             }
-           // dd($classAssessments);
+            // dd($classAssessments);
             return $classAssessments;
         } else {
 
             $studentID = $request->input('studentID');
             //$studentID = Qs::decodeHash($studentId);
-            $course = Courses::where('code',$code)->get()->first();
-            $classess = Classes::where('academicPeriodID',$aid)->where('courseID',$course->id)->get()->first();
-            $grouped['assess'] = ClassAssessment::where('classID',$classess->id)->get();
+            $course = Courses::where('code', $code)->get()->first();
+            $classess = Classes::where('academicPeriodID', $aid)->where('courseID', $course->id)->get()->first();
+            $grouped['assess'] = ClassAssessment::where('classID', $classess->id)->get();
 
-            $assessmentIDs = ImportList::where('studentID',$studentID)->where('academicPeriodID',$aid)->where('programID',$pid)->where('code',$code)->pluck('assessmentID');
-
-            $grouped = DB::table('ac_gradebook_imports')
-                ->join('users', 'users.student_id', '=', 'ac_gradebook_imports.studentID')
-                ->join('ac_assessmentTypes', 'ac_assessmentTypes.id', '=', 'ac_gradebook_imports.assessmentID')
-                ->select(
-                    'users.first_name as first_name',
-                    'users.last_name as last_name',
-                    'ac_gradebook_imports.code as code',
-                    'ac_gradebook_imports.title as title',
-                    'ac_gradebook_imports.total as marks',
-                    'ac_gradebook_imports.studentID as student_id',
-                    'ac_gradebook_imports.id as id',
-                    'ac_gradebook_imports.assessmentID as assessmentID',
-                    'ac_assessmentTypes.name as assessment_name',
-                    'ac_gradebook_imports.key as key',
-                    'ac_gradebook_imports.status as status',
-                )
-                ->where('ac_gradebook_imports.academicPeriodID', '=', $aid)
-                ->where('ac_gradebook_imports.code', '=', $code)
-                ->where('ac_gradebook_imports.programID', '=', $pid)
-                ->where('ac_gradebook_imports.studentID', '=', $studentID)
-                ->get();
+            $assessmentIDs = ImportList::where('studentID', $studentID)->where('academicPeriodID', $aid)->where('programID', $pid)->where('code', $code)->pluck('assessmentID');
+            if ($type == 'assess') {
+                $grouped = DB::table('ac_gradebook_imports')
+                    ->join('users', 'users.student_id', '=', 'ac_gradebook_imports.studentID')
+                    ->join('ac_assessmentTypes', 'ac_assessmentTypes.id', '=', 'ac_gradebook_imports.assessmentID')
+                    ->select(
+                        'users.first_name as first_name',
+                        'users.last_name as last_name',
+                        'ac_gradebook_imports.code as code',
+                        'ac_gradebook_imports.title as title',
+                        'ac_gradebook_imports.total as marks',
+                        'ac_gradebook_imports.studentID as student_id',
+                        'ac_gradebook_imports.id as id',
+                        'ac_gradebook_imports.assessmentID as assessmentID',
+                        'ac_assessmentTypes.name as assessment_name',
+                        'ac_gradebook_imports.key as key',
+                        'ac_gradebook_imports.status as status',
+                    )
+                    ->where('ac_gradebook_imports.academicPeriodID', '=', $aid)
+                    ->where('ac_gradebook_imports.code', '=', $code)
+                    ->where('ac_gradebook_imports.programID', '=', $pid)
+                    ->where('ac_gradebook_imports.studentID', '=', $studentID)
+                    ->where('ac_assessmentTypes.id', '!=', 1)
+                    ->get();
+            }else{
+                $grouped = DB::table('ac_gradebook_imports')
+                    ->join('users', 'users.student_id', '=', 'ac_gradebook_imports.studentID')
+                    ->join('ac_assessmentTypes', 'ac_assessmentTypes.id', '=', 'ac_gradebook_imports.assessmentID')
+                    ->select(
+                        'users.first_name as first_name',
+                        'users.last_name as last_name',
+                        'ac_gradebook_imports.code as code',
+                        'ac_gradebook_imports.title as title',
+                        'ac_gradebook_imports.total as marks',
+                        'ac_gradebook_imports.studentID as student_id',
+                        'ac_gradebook_imports.id as id',
+                        'ac_gradebook_imports.assessmentID as assessmentID',
+                        'ac_assessmentTypes.name as assessment_name',
+                        'ac_gradebook_imports.key as key',
+                        'ac_gradebook_imports.status as status',
+                    )
+                    ->where('ac_gradebook_imports.academicPeriodID', '=', $aid)
+                    ->where('ac_gradebook_imports.code', '=', $code)
+                    ->where('ac_gradebook_imports.programID', '=', $pid)
+                    ->where('ac_gradebook_imports.studentID', '=', $studentID)
+                    ->get();
+            }
 
             foreach ($grouped as $item) {
                 foreach ($assessmentIDs as $assessmentID) {
                     if ($item->assessmentID === $assessmentID) {
                         // Add the value here
-                        $total = ClassAssessment::where('classID',$classess->id)->where('assesmentID',$assessmentID)->get()->first();
+                        $total = ClassAssessment::where('classID', $classess->id)->where('assesmentID', $assessmentID)->get()->first();
                         $item->total = $total->total;
                     }
                 }
@@ -1199,7 +1378,9 @@ class ClassAssessmentsController extends Controller
 
         return $grouped;
     }
-    public function GetProgramResultsLevel(Request $request)
+
+    public
+    function GetProgramResultsLevel(Request $request)
     {
         $aid = $request->query('aid');
         $pid = $request->query('pid');
@@ -1260,36 +1441,36 @@ class ClassAssessmentsController extends Controller
             ->where('ac_gradebook_imports.programID', '=', $pid)
             ->where('ac_gradebook_imports.student_level_id', '=', $level)
             ->where('ac_gradebook_imports.status', '=', 0)
-            ->whereIn('ac_gradebook_imports.studentID',$studentIds)
+            ->whereIn('ac_gradebook_imports.studentID', $studentIds)
             ->get();
-            //->paginate(5);
-            //->paginate(4, ['*'], 'page', 1);
+        //->paginate(5);
+        //->paginate(4, ['*'], 'page', 1);
         $results = [];
         foreach ($grouped as $row) {
 
             $academicPeriod = $row->academicPeriod;
             $programId = $row->program_id;
-            $academic=[
+            $academic = [
                 'academic' => $row->academicPeriod,
                 'program' => $row->program_id,
             ];
             if (!isset($results[$academic['academic']])) {
                 $results[$academic['academic']] = [
                     'academic' => $row->academicPeriod,
-                    'current_page'=> $groupedAta->currentPage(),
-                    'last_page'=> $groupedAta->lastPage(),
-                    'per_page'=> $groupedAta->perPage(),
+                    'current_page' => $groupedAta->currentPage(),
+                    'last_page' => $groupedAta->lastPage(),
+                    'per_page' => $groupedAta->perPage(),
                     'program' => $row->program_id,
                     'program_name' => $row->program_name,
                     'level_name' => $level_name->name,
                     'level_id' => $level,
                     'program_code' => $row->program_code,
-                    'academicperiodname' =>$row->academicPeriodcode,
+                    'academicperiodname' => $row->academicPeriodcode,
                     'total_students' => $totalStudents,
                     'students' => [],
                 ];
             }
-            if ( $row->status == 1) {
+            if ($row->status == 1) {
                 continue; // Skip this student
             }
             $studentId = $row->student_id;
@@ -1299,7 +1480,7 @@ class ClassAssessmentsController extends Controller
                     'student_id' => $studentId,
                     'level' => $level_name->name,
                     'courses' => [],
-                    'classes'=> \App\Models\Academics\AcademicPeriods::myclasses($row->userID,$row->academicPeriod)
+                    'classes' => \App\Models\Academics\AcademicPeriods::myclasses($row->userID, $row->academicPeriod)
                 ];
             }
 
@@ -1310,22 +1491,22 @@ class ClassAssessmentsController extends Controller
                     'title' => $row->title,
                     'CA' => 0,
                     'total' => 0,
-                    'assessments' =>[],
+                    'assessments' => [],
                 ];
 
                 $results[$academic['academic']]['students'][$studentId]['courses'][$courseCode] = $course;
             }
             // Check if the course code is already present in the classes array and remove it
-            foreach ($results[$academic['academic']]['students'][$studentId]['classes'] as $index => $class){
-                if (isset($class['course_code']) &&  $class['course_code'] == $row->code) {
+            foreach ($results[$academic['academic']]['students'][$studentId]['classes'] as $index => $class) {
+                if (isset($class['course_code']) && $class['course_code'] == $row->code) {
                     unset($results[$academic['academic']]['students'][$studentId]['classes'][$index]);
-                }else{
+                } else {
                     $results[$academic['academic']]['students'][$studentId]['courses'][$class['course_code']] = [
                         'code' => $class['course_code'],
                         'title' => $class['course_name'],
                         'CA' => 0,
                         'total' => 0,
-                        'assessments' =>[],
+                        'assessments' => [],
                     ];
                 }
             }
@@ -1342,7 +1523,7 @@ class ClassAssessmentsController extends Controller
                     'status' => $row->status,
                 ];
 
-                if ($row->assessment_name != 'Exam'){
+                if ($row->assessment_name != 'Exam') {
                     $results[$academic['academic']]['students'][$studentId]['courses'][$courseCode]['CA'] += $row->total;
                 }
                 $results[$academic['academic']]['students'][$studentId]['courses'][$courseCode]['total'] += $row->total;
@@ -1366,7 +1547,10 @@ class ClassAssessmentsController extends Controller
         return view('pages.academics.class_assessments.results_review_board', compact('results'));
         //return view('pages.academics.class_assessments.update_marks', compact('results'));
     }
-    public static function calculateComment($courses) {
+
+    public
+    static function calculateComment($courses)
+    {
         $comment = '';
 
         $courseCount = count($courses);
@@ -1410,7 +1594,8 @@ class ClassAssessmentsController extends Controller
     }
 
 
-    public static function calculateGrade($total)
+    public
+    static function calculateGrade($total)
     {
         // Define your grade thresholds and corresponding values here
         if ($total == 0) {
@@ -1441,7 +1626,9 @@ class ClassAssessmentsController extends Controller
             return 'A+';
         }
     }
-    public function PublishProgramResults(Request $request)
+
+    public
+    function PublishProgramResults(Request $request)
     {
         /**
          * Error Key for published
@@ -1450,17 +1637,18 @@ class ClassAssessmentsController extends Controller
          */
         //dd($request);
         $student_id = $request->input('ids');
-       // dd($student_id);
+        // dd($student_id);
         $programID = $request->input('programID');
         $academicPeriodID = $request->input('academicPeriodID');
-        $importedGrades = GradeBookImport::whereIn('studentID',$request->ids)->where('programID', $programID)->where('academicPeriodID', $academicPeriodID)->get();
+        $type = $request->input('type');
+        $importedGrades = GradeBookImport::whereIn('studentID', $request->ids)->where('programID', $programID)->where('academicPeriodID', $academicPeriodID)->get();
         //dd($importedGrades);
         foreach ($importedGrades as $importedGrade) {
 
             // check if user has registered for this academic period.
             $user = User::where('student_id', $importedGrade->studentID)->get()->first();
             if ($user) {
-                $lastEnrollment      = Enrollment::where('userID', $user->id)->get()->last();
+                $lastEnrollment = Enrollment::where('userID', $user->id)->get()->last();
 
 //                if (empty($lastEnrollment)) {
 //                    // check pre activation courses for course
@@ -1623,7 +1811,7 @@ class ClassAssessmentsController extends Controller
 
                 if ($lastEnrollment) {
 
-                    $lastEnrolledClass   = Classes::where('id', $lastEnrollment->classID)->get()->first();
+                    $lastEnrolledClass = Classes::where('id', $lastEnrollment->classID)->get()->first();
                     /*if ($lastEnrolledClass && $lastEnrolledClass->academicPeriodID == request('academicPeriodID')) {*/
                     if ($lastEnrolledClass) {
                         # Proceed to importing
@@ -1636,50 +1824,65 @@ class ClassAssessmentsController extends Controller
                             # Add results to gradebook
                             $course = Courses::where('code', $importedGrade->code)->get()->first();
                             if ($course) {
+                                if ($type !== 'assess') {
+                                    $class = Classes::where('courseID', $course->id)->where('academicPeriodID', $academicPeriodID)->get()->first();
+                                    // check if class has assesments
+                                    $assesment = ClassAssessment::where('classID', $class->id)->get()->first();
+                                    // Update GradeBook
+                                    $gradeBook = GradeBook::where('key', $user->id . '-' . $assesment->id . '' . '1')->get()->first();
+                                    //$gradeBook = GradeBook::where('key', $user->id . '-' . $class->id. '-' . '1')->get()->first();
 
-                                $class = Classes::where('courseID', $course->id)->where('academicPeriodID', $academicPeriodID)->get()->first();
-                                // check if class has assesments
-                                $assesment = ClassAssessment::where('classID', $class->id)->get()->first();
-                                // Update GradeBook
-                                $gradeBook = GradeBook::where('key', $user->id . '-' . $assesment->id . '' . '1')->get()->first();
-                                //$gradeBook = GradeBook::where('key', $user->id . '-' . $class->id. '-' . '1')->get()->first();
+                                    if (empty($gradeBook)) {
+                                        $gradeBook = new GradeBook();
+                                        $gradeBook->userID = $user->id;
+                                        $gradeBook->grade = $importedGrade->total;
+                                        $gradeBook->classAssessmentID = $assesment->id;
+                                        //$gradeBook->classAssessmentID   = 1;
+                                        $gradeBook->key = $user->id . '-' . $assesment->id . '' . '1';
+                                        //$gradeBook->key                 = $user->id . '-' . $class->id. '-' . '1';
+                                        $gradeBook->save();
+                                    } else {
+                                        $gradeBook->grade = ($gradeBook->grade + $importedGrade->total);
+                                        $gradeBook->save();
+                                    }
 
-                                if (empty($gradeBook)) {
-                                    $gradeBook                      = new GradeBook();
-                                    $gradeBook->userID              = $user->id;
-                                    $gradeBook->grade               = $importedGrade->total;
-                                    $gradeBook->classAssessmentID   = $assesment->id;
-                                    //$gradeBook->classAssessmentID   = 1;
-                                    $gradeBook->key                 = $user->id . '-' . $assesment->id . '' . '1';
-                                    //$gradeBook->key                 = $user->id . '-' . $class->id. '-' . '1';
-                                    $gradeBook->save();
-                                } else {
-                                    $gradeBook->grade               = ($gradeBook->grade + $importedGrade->total);
-                                    $gradeBook->save();
+                                    // check if for enrollment
+                                    $_enrollment = Enrollment::where('key', $user->id . '-' . $class->id)->get()->first();
+                                    /*
+                                        if (empty($_enrollment)) {
+                                            Enrollment::create([
+                                                'userID'    => $user->id,
+                                                'classID'   => $class->id,
+                                                'key'       => $user->id . '-' . $class->id,
+                                            ]);
+                                        }*/
+                                    $importedGrade->published = 1;
+                                    $importedGrade->status = 1;
+                                    $importedGrade->processed_by = Auth::user()->id;
+                                    $importedGrade->save();
+                                    $studentIds = $request->ids; // Assuming $request->ids is an array of student IDs
+                                    GradeBookImport::whereIn('studentID', $studentIds)->where('programID', $programID)->where('academicPeriodID', $academicPeriodID)
+                                        ->update([
+                                            'status' => 1,
+                                            'published' => 1,
+                                            'processed_by' => Auth::user()->id,
+                                        ]);
+
+                                }else{
+                                    $importedGrade->published = 1;
+                                    $importedGrade->status = 1;
+                                    $importedGrade->processed_by = Auth::user()->id;
+                                    $importedGrade->save();
+                                    $studentIds = $request->ids; // Assuming $request->ids is an array of student IDs
+                                    GradeBookImport::whereIn('studentID', $studentIds)->where('programID', $programID)->where('academicPeriodID', $academicPeriodID)
+                                        ->where('ac_assessmentTypes.id', '!=', 1)
+                                        ->update([
+                                            'status' => 0,
+                                            'published' => 0,
+                                            'notifiedStudent' => 1,
+                                            'processed_by' => Auth::user()->id,
+                                        ]);
                                 }
-
-                                // check if for enrollment
-                                $_enrollment = Enrollment::where('key', $user->id . '-' . $class->id)->get()->first();
-                            /*
-                                if (empty($_enrollment)) {
-                                    Enrollment::create([
-                                        'userID'    => $user->id,
-                                        'classID'   => $class->id,
-                                        'key'       => $user->id . '-' . $class->id,
-                                    ]);
-                                }*/
-
-                                $importedGrade->published = 1;
-                                $importedGrade->status = 1;
-                                $importedGrade->processed_by = Auth::user()->id;
-                                $importedGrade->save();
-                                $studentIds = $request->ids; // Assuming $request->ids is an array of student IDs
-                                GradeBookImport::whereIn('studentID', $studentIds)->where('programID', $programID)->where('academicPeriodID', $academicPeriodID)
-                                    ->update([
-                                        'status' => 1,
-                                        'published' => 1,
-                                        'processed_by' => Auth::user()->id,
-                                    ]);
 
 //                                foreach ($studentIds as $studentId) {
 //                                    GradeBookImport::updateOrInsert(
@@ -1699,19 +1902,19 @@ class ClassAssessmentsController extends Controller
                                 //return Qs::json($importedGrade,true);
 
                             }
-                            return Qs::json('Results published successfully',true);
+                            return Qs::json('Results published successfully', true);
                         } // ends status
                         // drop courses without gradebook
                         else {
                             $importedGrade->published = -1;
-                            return Qs::json('Error while publishing results try again',false);
+                            return Qs::json('Error while publishing results try again', false);
                         }
                     }
                 } else {
 
                     $importedGrade->published = -2;
                     $importedGrade->save();
-                    return Qs::json('Error while publishing results try again',false);
+                    return Qs::json('Error while publishing results try again', false);
                 }
             }
         }

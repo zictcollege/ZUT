@@ -286,7 +286,7 @@
 
                     {{--Exam--}}
                     @if(true)
-                        <li class="nav-item nav-item-submenu {{ in_array(Route::currentRouteName(), ['exams.index', 'exams.edit', 'assessments.index', 'assessments.edit', 'assessments.store', 'classAssessments.index',
+                        <li class="nav-item nav-item-submenu {{ in_array(Route::currentRouteName(), ['getPublishProgramsCas','exams.index', 'exams.edit', 'assessments.index', 'assessments.edit', 'assessments.store', 'classAssessments.index',
                                                          'classAssessments.edit', 'classAssessments.show', 'classAssessments.store', 'classAssessments.create','import.process','getPublishPrograms','getPramResults','myClassStudentList','myClassList',
                                                          'reports.index','getPramResultsLevel']) ? 'nav-item-expanded nav-item-open' : '' }} ">
                             <a href="#" class="nav-link"><i class="icon-books"></i> <span> Exams</span></a>
@@ -360,7 +360,7 @@
 
                                         {{--Grades list--}}
                                         @if(!Qs::userIsInstructor())
-                                            <li class="nav-item nav-item-submenu {{ in_array(Route::currentRouteName(), ['getPramResultsLevel','smyClassList','getPublishPrograms','getPramResults']) ? 'nav-item-expanded nav-item-open' : 'getPublishPrograms' }}">
+                                            <li class="nav-item nav-item-submenu {{ in_array(Route::currentRouteName(), ['getPublishProgramsCas','getPramResultsLevel','smyClassList','getPublishPrograms','getPramResults']) ? 'nav-item-expanded nav-item-open' : 'getPublishPrograms' }}">
                                                 <a href="#" class="nav-link"><span>Board of Examiners</span></a>
                                                 <ul class="nav nav-group-sub" data-submenu-title="Manage Students">
                                                     <li class="nav-item nav-item-submenu {{ in_array(Route::currentRouteName(), ['reports.index']) ? 'nav-item-expanded nav-item-open' : 'getPublishPrograms' }}">
@@ -410,11 +410,30 @@
                                                                     </ul>
 
                                                                 </li>
+                                                            @endif
 
-                                                                {{--Student Graduated--}}
-                                                                {{--                                                    <li class="nav-item"><a href="{{ "#"  }}"--}}
-                                                                {{--                                                                            class="nav-link {{ in_array(Route::currentRouteName(), ['students.graduated' ]) ? 'active' : '' }}">Students--}}
-                                                                {{--                                                            Graduated</a></li>--}}
+                                                        </ul>
+
+                                                    <li class="nav-item nav-item-submenu {{ in_array(Route::currentRouteName(), ['getPublishProgramsCas','getPublishPrograms','getPramResults']) ? 'nav-item-expanded nav-item-open' : 'getPublishPrograms' }}">
+                                                        <a href="#"
+                                                           class="nav-link"><span> Publish CA results</span></a>
+                                                        <ul class="nav nav-group-sub"
+                                                            data-submenu-title="Manage Students">
+                                                            @if(true)
+                                                                <li class="nav-item nav-item-submenu {{ in_array(Route::currentRouteName(), ['getPublishProgramsCas']) ? 'nav-item-expanded nav-item-open' : '' }}">
+                                                                    <a href="#"
+                                                                       class="nav-link {{ in_array(Route::currentRouteName(), ['getPublishProgramsCas' ]) ? 'active' : '' }}">Academic
+                                                                        Periods</a>
+                                                                    <ul class="nav nav-group-sub">
+                                                                        @foreach(\App\Repositories\Academicperiods::getAllReadyPublish('code') as $c)
+                                                                            <li class="nav-item"><a
+                                                                                        href="{{ route('getPublishProgramsCas', Qs::hash($c->id)) }}"
+                                                                                        class="nav-link  {{ in_array(Route::currentRouteName(), ['getPublishProgramsCas' ]) ? 'active' : '' }}">{{ $c->code }}</a>
+                                                                            </li>
+                                                                        @endforeach
+                                                                    </ul>
+
+                                                                </li>
                                                             @endif
 
                                                         </ul>

@@ -56,7 +56,7 @@
                                         @endphp
                                         <select data-placeholder="Choose..." required name="assesmentID"
                                                 id="assesmentID" class=" select-search form-control"
-                                                onchange="StrMod4All('{{$firstAcademicData['program']}}','{{$firstAcademicData['academic']}}', this.value)">
+                                                onchange="StrMod4All('{{$firstAcademicData['program']}}','{{$firstAcademicData['academic']}}', this.value,'assess')">
                                             <option value=""></option>
                                             @foreach ($results as $academicData)
                                                 @foreach ($academicData['students'] as $student)
@@ -97,8 +97,10 @@
                                                            value="{{ $firstAcademicData['program'] }}">
                                                     <input type="hidden" name="level_name"
                                                            value="{{ $firstAcademicData['level_id'] }}">
-                                                    <input type="hidden" name="typepublish"
-                                                           value="Exam">
+                                                    <input type="hidden" name="level_name"
+                                                           value="{{ $firstAcademicData['level_id'] }}">
+                                                    <input type="hidden" name="type"
+                                                           value="typepublish">
                                                 </div>
 
                                                 <thead>
@@ -106,10 +108,7 @@
                                                     <th>S/N</th>
                                                     <th>Course Code</th>
                                                     <th>Course Name</th>
-                                                    <th>CA</th>
-                                                    <th>Exam</th>
                                                     <th>Total</th>
-                                                    <th>Grade</th>
                                                     <th>Modify</th>
                                                 </tr>
                                                 </thead>
@@ -121,18 +120,8 @@
                                                         <td>{{ $course['title'] }}</td>
                                                         <td>{{ $course['CA']  }}</td>
                                                         <td>
-                                                            @foreach($course['assessments'] as $assess)
-                                                                @if(!empty($assess['assessment_name']) && $assess['assessment_name']=='Exam')
-                                                                    {{ $assess['total'] }}
-                                                                @endif
-                                                            @endforeach
-                                                        </td>
-                                                        {{--                                        <td>{{ $course['CA'] }}</td>--}}
-                                                        <td>{{ $course['total'] }}</td>
-                                                        <td>{{ $course['grade'] }}</td>
-                                                        <td>
                                                             @if(Qs::userIsTeamSA())
-                                                                <a onclick="modifyMarks('{{$student['student_id']}}','{{$firstAcademicData['program']}}','{{$firstAcademicData['academic']}}','{{ $course['code'] }}','exam')"
+                                                                <a onclick="modifyMarks('{{$student['student_id']}}','{{$firstAcademicData['program']}}','{{$firstAcademicData['academic']}}','{{ $course['code'] }}','assess')"
                                                                    class="nav-link"><i class="icon-pencil"></i></a>
                                                             @endif
                                                         </td>
@@ -141,8 +130,7 @@
                                                 </tbody>
 
                                             </table>
-                                            <p class="bg-success p-3 align-bottom">Comment
-                                                : {{ $student['commentData'] }}
+                                            <p class="bg-success p-4 align-bottom">
                                                 {{ Form::checkbox('ckeck_user', 1, false,['class'=>'ckeck_user  float-right p-5','data-id' => $student['student_id'] ]) }} {{ Form::label('publish', 'Publish', ['class' => 'mr-3 float-right']) }}</p>
                                             <hr>
                                         @endforeach
@@ -158,7 +146,7 @@
 
                                 @else
                                     <button type="button" class="float-right mr-5 btn btn-primary load-more-results load-more-results-first btn-sm mt-3"
-                                    onclick="LoadMoreResults('{{ $firstAcademicData['current_page'] }}','{{ $firstAcademicData['last_page'] }}','{{ $firstAcademicData['per_page'] }}','{{$firstAcademicData['program']}}','{{$firstAcademicData['academic']}}','{{$firstAcademicData['level_id']}}')">
+                                    onclick="LoadMoreResultsCas('{{ $firstAcademicData['current_page'] }}','{{ $firstAcademicData['last_page'] }}','{{ $firstAcademicData['per_page'] }}','{{$firstAcademicData['program']}}','{{$firstAcademicData['academic']}}','{{$firstAcademicData['level_id']}}')">
                                     <i class="fa fa-share"></i> Load More
                                     </button>
                                 @endif

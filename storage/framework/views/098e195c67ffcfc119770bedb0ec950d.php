@@ -7,7 +7,8 @@
     <div class="card">
         <div class="card-header header-elements-inline">
             <h3><?php echo e($class[0]['code']); ?></h3>
-            <h6 class="card-title">Enter Assessment And Exam Results for <?php echo e($class[0]['courseCode'].' - '.$class[0]['courseName']); ?></h6>
+            <h6 class="card-title">Enter Assessment And Exam Results
+                for <?php echo e($class[0]['courseCode'].' - '.$class[0]['courseName']); ?></h6>
             <h6 class="card-title assess-total">Being Marked out of <?php echo e($class[0]['assess_total']); ?></h6>
             <?php echo Qs::getPanelOptions(); ?>
 
@@ -17,14 +18,14 @@
             <ul class="nav nav-tabs nav-tabs-highlight">
                 <li class="nav-item"><a href="#ut-post-results" class="nav-link active" data-toggle="tab"><i
                                 class="icon-plus2"></i>Enter results</a></li>
-
-
-
-
-
-
-
-
+                <li class="nav-item"><a href="#Upload-results"
+                                        class="nav-link <?php echo e((!empty($isInstructor) && $isInstructor == 1)? 'active' :''); ?>"
+                                        data-toggle="tab"><i
+                                class="icon-plus2"></i>Post results</a></li>
+                
+                
+                
+                
             </ul>
 
             <div class="tab-content">
@@ -37,10 +38,11 @@
                             <th>Student ID</th>
                             <th>Assessment Type</th>
                             <th>Marks</th>
-
+                            
                         </tr>
                         </thead>
                         <tbody>
+
                         <?php $__currentLoopData = $class[0]['students']; $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $classAssessment): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
                             <tr>
                                 <td><?php echo e($loop->iteration); ?></td>
@@ -71,23 +73,23 @@
                                 </td>
 
 
+                                
+                                
+                                
+                                
+                                
+                                
+                                
+                                
 
+                                
+                                
+                                
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                                
+                                
+                                
+                                
                             </tr>
                         <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
                         </tbody>
@@ -103,47 +105,48 @@
                                 </div>
                                 <div class="card-body">
 
-                                        <!-- Import Form -->
-                                        <form method="POST" action="<?php echo e(route('import.process')); ?>"
-                                              enctype="multipart/form-data">
-                                            <?php echo csrf_field(); ?>
-                                            <div class="form-group row">
-                                                <label class="col-lg-3 col-form-label font-weight-semibold"
-                                                       for="nal_id">Academic Period: <span class="text-danger">*</span></label>
-                                                <div class="col-lg-9">
-                                                    <select onchange="getRunningPrograms(this.value)"
-                                                            data-placeholder="Choose..." name="academic" required
-                                                            id="nal_id" class="select-search form-control">
-                                                        <option value="">Choose</option>
-                                                        <option value="<?php echo e(Qs::hash($class[0]['apid'] )); ?>"><?php echo e($class[0]['code']); ?></option>
+                                    <!-- Import Form -->
+                                    <form method="POST" action="<?php echo e(route('import.process')); ?>"
+                                          enctype="multipart/form-data">
+                                        <?php echo csrf_field(); ?>
+                                        <div class="form-group row">
+                                            <label class="col-lg-3 col-form-label font-weight-semibold"
+                                                   for="nal_id">Academic Period: <span
+                                                        class="text-danger">*</span></label>
+                                            <div class="col-lg-9">
+                                                <select onchange="getRunningPrograms(this.value)"
+                                                        data-placeholder="Choose..." name="academic" required
+                                                        id="nal_id" class="select-search form-control">
+                                                    <option value="">Choose</option>
+                                                    <option value="<?php echo e(Qs::hash($class[0]['apid'] )); ?>"><?php echo e($class[0]['code']); ?></option>
 
-                                                    </select>
-                                                </div>
+                                                </select>
                                             </div>
-                                            <div class="form-group row">
-                                                <label for="classID"
-                                                       class="col-lg-3 col-form-label font-weight-semibold">Class: <span
-                                                            class="text-danger">*</span></label>
-                                                <div class="col-lg-9">
-                                                    <select data-placeholder="Choose..." required name="programID"
-                                                            id="classID" class=" select-search form-control">
-                                                        <option value="">Choose</option>
-                                                    </select>
-                                                </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label for="classID"
+                                                   class="col-lg-3 col-form-label font-weight-semibold">Class: <span
+                                                        class="text-danger">*</span></label>
+                                            <div class="col-lg-9">
+                                                <select data-placeholder="Choose..." required name="programID"
+                                                        id="classID" class=" select-search form-control">
+                                                    <option value="">Choose</option>
+                                                </select>
                                             </div>
-                                            <div class="form-group row">
-                                                <label for="classID"
-                                                       class="col-lg-3 col-form-label font-weight-semibold">Choose File
-                                                    <span class="text-danger">*</span></label>
-                                                <div class="col-lg-9">
-                                                    <input type="file" class="form-control-file" id="file" name="file"
-                                                           required>
-                                                    <input type="hidden" name="instructor" value="instructorav"
-                                                           required>
-                                                </div>
+                                        </div>
+                                        <div class="form-group row">
+                                            <label for="classID"
+                                                   class="col-lg-3 col-form-label font-weight-semibold">Choose File
+                                                <span class="text-danger">*</span></label>
+                                            <div class="col-lg-9">
+                                                <input type="file" class="form-control-file" id="file" name="file"
+                                                       required>
+                                                <input type="hidden" name="instructor" value="instructorav"
+                                                       required>
                                             </div>
-                                            <button type="submit" class="btn btn-primary">Submit Results</button>
-                                        </form>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">Submit Results</button>
+                                    </form>
                                 </div>
                             </div>
                         </div>
@@ -170,30 +173,12 @@
                                         <form method="POST" action="<?php echo e(route('import.process')); ?>"
                                               enctype="multipart/form-data">
                                             <?php echo csrf_field(); ?>
-                                            <div class="form-group row">
-                                                <label class="col-lg-3 col-form-label font-weight-semibold"
-                                                       for="nal_id">Academic Period: <span class="text-danger">*</span></label>
-                                                <div class="col-lg-9">
-                                                    <select onchange="getRunningPrograms(this.value)"
-                                                            data-placeholder="Choose..." name="academic" required
-                                                            id="nal_id" class="select-search form-control">
-                                                        <option value="">Choose</option>
-                                                        <option value="<?php echo e(Qs::hash($class[0]['apid'] )); ?>"><?php echo e($class[0]['code']); ?></option>
 
-                                                    </select>
-                                                </div>
-                                            </div>
-                                            <div class="form-group row">
-                                                <label for="classID"
-                                                       class="col-lg-3 col-form-label font-weight-semibold">Class: <span
-                                                            class="text-danger">*</span></label>
-                                                <div class="col-lg-9">
-                                                    <select data-placeholder="Choose..." required name="programID"
-                                                            id="classID" class=" select-search form-control">
-                                                        <option value="">Choose</option>
-                                                    </select>
-                                                </div>
-                                            </div>
+                                            <input type="hidden" name="academic" value="<?php echo e($class[0]['apid']); ?>">
+                                            <input type="hidden" name="course" value="<?php echo e($class[0]['courseCode']); ?>">
+                                            <input type="hidden" name="title" value="<?php echo e($class[0]['courseName']); ?>">
+                                            <input type="hidden" name="assesTotal" value="<?php echo e($class[0]['assess_total']); ?>">
+
                                             <div class="form-group row">
                                                 <label for="classID"
                                                        class="col-lg-3 col-form-label font-weight-semibold">Choose File
@@ -205,7 +190,12 @@
                                                            required>
                                                 </div>
                                             </div>
+                                            <input type="hidden" id="idc" name="AssessIDTemplate"
+                                                   value="<?php echo e($class[0]['assessmentId']); ?>">
+                                            <input type="hidden" id="assessid" name="classIDTemplate"
+                                                   value="<?php echo e($class[0]['classID']); ?>">
                                             <button type="submit" class="btn btn-primary">Upload and Preview</button>
+                                            <button type="button" onclick="downloadCSVtemplate()" class="btn btn-primary">Download CSV Template</button>
                                         </form>
                                     <?php else: ?>
                                         <!-- Data Preview Table -->
@@ -213,15 +203,15 @@
                                         <table class="table table-bordered table-hover datatable-button-html5-columns">
                                             <thead>
                                             <tr>
-
-
-
-                                                <th> SIN </th>
-                                                <th> CODE </th>
-                                                <th> COURSE </th>
-                                                <th> MARK </th>
-                                                <th> ACADEMIC PERIOD </th>
-                                                <th> PROGRAM </th>
+                                                
+                                                
+                                                
+                                                <th> SIN</th>
+                                                <th> CODE</th>
+                                                <th> COURSE</th>
+                                                <th> MARK</th>
+                                                <th> ACADEMIC PERIOD</th>
+                                                <th> PROGRAM</th>
 
 
                                             </tr>

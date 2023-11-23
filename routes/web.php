@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\Academics\AcademicPeriodsController;
+use App\Http\Controllers\Academics\AssessmentReportsController;
 use App\Http\Controllers\Academics\AssessmentsTypesController;
+use App\Http\Controllers\Academics\CAsController;
 use App\Http\Controllers\Academics\ClassAssessmentsController;
 use App\Http\Controllers\Academics\ClassesController;
 use App\Http\Controllers\Academics\CourseLevelsController;
@@ -130,6 +132,7 @@ Route::group(['middleware' => 'auth'], function () {
         Route::post('/process',[ClassAssessmentsController::class,'ProcessUploadedResults'])->name('import.process');
         Route::get('/results-programs/{id}',[ClassAssessmentsController::class,'ProgramForResults'])->name('program-names');
         Route::get('/student-list/{class}/{assessid}',[ClassAssessmentsController::class,'StudentListResults'])->name('myClassStudentList');
+        Route::post('/results-upload-template',[ClassAssessmentsController::class,'DownloadResultsTemplate'])->name('template.download');
         Route::get('/class-list/{id}',[ClassAssessmentsController::class,'getClassesToPublish'])->name('myClassList');
         Route::post('/post-results',[ClassAssessmentsController::class,'PostStudentResults'])->name('postedResults.process');
         Route::get('/publish-program-list/{id}',[ClassAssessmentsController::class,'GetProgramsToPublish'])->name('getPublishPrograms');
@@ -143,7 +146,14 @@ Route::group(['middleware' => 'auth'], function () {
         Route::post('/load-more',[ClassAssessmentsController::class,'LoadMoreResults'])->name('load.more.results.board');
 
         Route::group(['prefix' => 'reports'], function (){
-            Route::get('/{id}',[\App\Http\Controllers\Academics\AssessmentReportsController::class,'index'])->name('reports.index');
+            Route::get('/{id}',[AssessmentReportsController::class,'index'])->name('reports.index');
+            Route::post('/get-levels',[AssessmentReportsController::class,'getReportLevels'])->name('get_levelsAsses');
+            Route::post('/get-results',[AssessmentReportsController::class,'getReportsToAnalyzeP'])->name('get_reports_results');
+        });
+        Route::group(['prefix' => 'cas'], function (){
+            Route::get('/publish-cas-program-list/{id}',[CAsController::class,'GetProgramsToPublishCas'])->name('getPublishProgramsCas');
+            Route::get('/program-results-levels',[CAsController::class,'GetProgramResultsLevelCas'])->name('getPramResultsLevelCas');
+            Route::post('/load-more',[CAsController::class,'LoadMoreResultsCas'])->name('load.more.results.board.Cas');
         });
     });
 

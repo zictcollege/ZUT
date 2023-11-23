@@ -287,7 +287,7 @@
 
                     
                     <?php if(true): ?>
-                        <li class="nav-item nav-item-submenu <?php echo e(in_array(Route::currentRouteName(), ['exams.index', 'exams.edit', 'assessments.index', 'assessments.edit', 'assessments.store', 'classAssessments.index',
+                        <li class="nav-item nav-item-submenu <?php echo e(in_array(Route::currentRouteName(), ['getPublishProgramsCas','exams.index', 'exams.edit', 'assessments.index', 'assessments.edit', 'assessments.store', 'classAssessments.index',
                                                          'classAssessments.edit', 'classAssessments.show', 'classAssessments.store', 'classAssessments.create','import.process','getPublishPrograms','getPramResults','myClassStudentList','myClassList',
                                                          'reports.index','getPramResultsLevel']) ? 'nav-item-expanded nav-item-open' : ''); ?> ">
                             <a href="#" class="nav-link"><i class="icon-books"></i> <span> Exams</span></a>
@@ -361,7 +361,7 @@
 
                                         
                                         <?php if(!Qs::userIsInstructor()): ?>
-                                            <li class="nav-item nav-item-submenu <?php echo e(in_array(Route::currentRouteName(), ['getPramResultsLevel','smyClassList','getPublishPrograms','getPramResults']) ? 'nav-item-expanded nav-item-open' : 'getPublishPrograms'); ?>">
+                                            <li class="nav-item nav-item-submenu <?php echo e(in_array(Route::currentRouteName(), ['getPublishProgramsCas','getPramResultsLevel','smyClassList','getPublishPrograms','getPramResults']) ? 'nav-item-expanded nav-item-open' : 'getPublishPrograms'); ?>">
                                                 <a href="#" class="nav-link"><span>Board of Examiners</span></a>
                                                 <ul class="nav nav-group-sub" data-submenu-title="Manage Students">
                                                     <li class="nav-item nav-item-submenu <?php echo e(in_array(Route::currentRouteName(), ['reports.index']) ? 'nav-item-expanded nav-item-open' : 'getPublishPrograms'); ?>">
@@ -411,11 +411,30 @@
                                                                     </ul>
 
                                                                 </li>
+                                                            <?php endif; ?>
 
-                                                                
-                                                                
-                                                                
-                                                                
+                                                        </ul>
+
+                                                    <li class="nav-item nav-item-submenu <?php echo e(in_array(Route::currentRouteName(), ['getPublishProgramsCas','getPublishPrograms','getPramResults']) ? 'nav-item-expanded nav-item-open' : 'getPublishPrograms'); ?>">
+                                                        <a href="#"
+                                                           class="nav-link"><span> Publish CA results</span></a>
+                                                        <ul class="nav nav-group-sub"
+                                                            data-submenu-title="Manage Students">
+                                                            <?php if(true): ?>
+                                                                <li class="nav-item nav-item-submenu <?php echo e(in_array(Route::currentRouteName(), ['getPublishProgramsCas']) ? 'nav-item-expanded nav-item-open' : ''); ?>">
+                                                                    <a href="#"
+                                                                       class="nav-link <?php echo e(in_array(Route::currentRouteName(), ['getPublishProgramsCas' ]) ? 'active' : ''); ?>">Academic
+                                                                        Periods</a>
+                                                                    <ul class="nav nav-group-sub">
+                                                                        <?php $__currentLoopData = \App\Repositories\Academicperiods::getAllReadyPublish('code'); $__env->addLoop($__currentLoopData); foreach($__currentLoopData as $c): $__env->incrementLoopIndices(); $loop = $__env->getLastLoop(); ?>
+                                                                            <li class="nav-item"><a
+                                                                                        href="<?php echo e(route('getPublishProgramsCas', Qs::hash($c->id))); ?>"
+                                                                                        class="nav-link  <?php echo e(in_array(Route::currentRouteName(), ['getPublishProgramsCas' ]) ? 'active' : ''); ?>"><?php echo e($c->code); ?></a>
+                                                                            </li>
+                                                                        <?php endforeach; $__env->popLoop(); $loop = $__env->getLastLoop(); ?>
+                                                                    </ul>
+
+                                                                </li>
                                                             <?php endif; ?>
 
                                                         </ul>
